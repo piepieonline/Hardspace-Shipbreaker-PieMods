@@ -9,16 +9,25 @@ namespace UpgradeCostAdjuster
 {
     public class Settings
     {
-        public float globalCostMultiplier;
-        public Dictionary<string, float> upgradeCosts;
+        public float globalLTCostMultiplier;
+        public float globalLTToCreditFactor;
+        public int globalRequiredLevelDefaultOverride;
+        public Dictionary<string, UpgradeCosts> upgradeCosts;
+        public List<string> excludedBecauseBroken;
         public bool debugLogChanges;
 
         public static Settings settings;
 
         public static void Load()
         {
-            var settingsText = System.IO.File.ReadAllText($".\\BepInEx\\plugins\\{PluginInfo.PLUGIN_NAME}\\settings.json");
+            var settingsText = System.IO.File.ReadAllText(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "settings.json"));
             settings = JsonConvert.DeserializeObject<Settings>(settingsText);  
         }
+    }
+
+    public class UpgradeCosts
+    {
+        public Dictionary<string, float> prices = new Dictionary<string, float>();
+        public int requiredLevel = -1;
     }
 }
