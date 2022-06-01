@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "PieChallengeMode": {
+      "commandName": "Project"
+    },
+    "Shipbreaker": {
+      "commandName": "Executable",
+      "executablePath": "D:\\Games\\Xbox\\Hardspace- Shipbreaker\\Content\\Shipbreaker.exe",
+      "workingDirectory": "D:\\Games\\Xbox\\Hardspace- Shipbreaker\\Content\\"
+    }
+  }
+}
