@@ -8,29 +8,8 @@ using System.Linq;
 
 namespace UpgradeCostAdjuster
 {
-    [HarmonyPatch(typeof(ScriptableObject), MethodType.Constructor)]
-    public class ScriptableObject_ScriptableObject
-    {
-        public static List<UpgradeAsset> UpgradeAssets = new List<UpgradeAsset>();
-        public static List<CurrencyAsset> CurrencyAssets = new List<CurrencyAsset>();
-
-        [HarmonyPrefix]
-        public static void Postfix(ScriptableObject __instance)
-        {
-            if (__instance.GetType() == typeof(UpgradeAsset))
-            {
-                if (Settings.settings.debugLogChanges)
-                    UpgradeCostAdjuster.LoggerInstance.LogInfo($"Adding upgrade asset");
-                UpgradeAssets.Add((UpgradeAsset)__instance);
-            }
-
-            if (__instance.GetType() == typeof(CurrencyAsset))
-            {
-                CurrencyAssets.Add((CurrencyAsset)__instance);
-            }
-        }
-    }
-
+    // Price adjustment
+    // TODO: Could potentially move into an event on the main plugin, rather than a patch
     [HarmonyPatch(typeof(Main), "StartSession")]
     public class Main_StartSession
     {
@@ -44,15 +23,16 @@ namespace UpgradeCostAdjuster
 
             if (hasPatched) return;
 
-            CurrencyAsset ltAsset = ScriptableObject_ScriptableObject.CurrencyAssets.Where(currAsset => currAsset.name == "LT_CurrencyAsset").First();
-            CurrencyAsset creditsAsset = ScriptableObject_ScriptableObject.CurrencyAssets.Where(currAsset => currAsset.name == "Credits_CurrencyAsset").First();
+            var currencyAssets = Resources.FindObjectsOfTypeAll<CurrencyAsset>();
+            var ltAsset = currencyAssets.Where(currAsset => currAsset.name == "LT_CurrencyAsset").First();
+            var creditsAsset = currencyAssets.Where(currAsset => currAsset.name == "Credits_CurrencyAsset").First();
 
             // Cache the reflection access
             FieldInfo UpgradeAsset_Price = typeof(UpgradeAsset).GetField("m_Price", BindingFlags.NonPublic | BindingFlags.Instance);
             FieldInfo UpgradePrice_Amount = typeof(UpgradePrice).GetField("m_Amount", BindingFlags.NonPublic | BindingFlags.Instance);
             FieldInfo UpgradePrice_CurrencyAsset = typeof(UpgradePrice).GetField("m_CurrencyAsset", BindingFlags.NonPublic | BindingFlags.Instance);
 
-            foreach (UpgradeAsset asset in ScriptableObject_ScriptableObject.UpgradeAssets)
+            foreach (UpgradeAsset asset in Resources.FindObjectsOfTypeAll<UpgradeAsset>())
             {
                 bool hasSpecificUpgradeCosts = Settings.settings.upgradeCosts.TryGetValue(asset.name, out var specificUpgradeCosts);
                 bool hasSpecificRequiredLevelOverride = hasSpecificUpgradeCosts && specificUpgradeCosts.requiredLevel >= 0;
@@ -74,7 +54,7 @@ namespace UpgradeCostAdjuster
                     if (asset.Price.Length != 1 || asset.Price[0].CurrencyAsset != ltAsset || Settings.settings.excludedBecauseBroken.Contains(asset.name))
                     {
                         // We know some unlocks shouldn't be touched at all, listed them in settings
-                        if(!Settings.settings.excludedBecauseBroken.Contains(asset.name))
+                        if (!Settings.settings.excludedBecauseBroken.Contains(asset.name))
                             UpgradeCostAdjuster.LoggerInstance.LogWarning($"Wrong currency for upgrade {asset.name}! Maybe there was a game update?");
                         continue;
                     }
@@ -91,18 +71,23 @@ namespace UpgradeCostAdjuster
                         UpgradePrice_Amount.SetValue(ltPrice, (int)(ltPrice.Amount * Settings.settings.globalLTCostMultiplier));
                     }
 
-                    if (hasSpecificRequiredCreditOverride)
+                    var newPrices = new UpgradePrice[] { ltPrice };
+
+                    if (hasSpecificRequiredCreditOverride || Settings.settings.globalLTToCreditFactor >= 0)
                     {
-                        UpgradePrice_Amount.SetValue(creditPrice, (int)(specificUpgradeCosts.prices["Credits_CurrencyAsset"]));
+                        if (hasSpecificRequiredCreditOverride)
+                        {
+                            UpgradePrice_Amount.SetValue(creditPrice, (int)(specificUpgradeCosts.prices["Credits_CurrencyAsset"]));
+                        }
+                        else if (Settings.settings.globalLTToCreditFactor >= 0)
+                        {
+                            UpgradePrice_Amount.SetValue(creditPrice, (int)(ltPrice.Amount * Settings.settings.globalLTToCreditFactor));
+                        }
+
                         UpgradePrice_CurrencyAsset.SetValue(creditPrice, creditsAsset);
-                    }
-                    else if (Settings.settings.globalLTToCreditFactor >= 0)
-                    {
-                        UpgradePrice_Amount.SetValue(creditPrice, (int)(ltPrice.Amount * Settings.settings.globalLTToCreditFactor));
-                        UpgradePrice_CurrencyAsset.SetValue(creditPrice, creditsAsset);
+                        newPrices = new UpgradePrice[] { ltPrice, creditPrice };
                     }
 
-                    var newPrices = new UpgradePrice[] { ltPrice, creditPrice };
                     UpgradeAsset_Price.SetValue(asset, newPrices);
 
                     if (Settings.settings.debugLogChanges)
@@ -111,6 +96,54 @@ namespace UpgradeCostAdjuster
             }
             hasPatched = true;
             UpgradeCostAdjuster.LoggerInstance.LogInfo($"Costs changed");
+        }
+    }
+
+    // Adjust the purchasing screen orange rectangle to match the number of lines
+    [HarmonyPatch(typeof(PriceListController), "BuildPriceList")]
+    public class PriceListController_BuildPriceList
+    {
+        static float initialY = -1;
+
+        [HarmonyPostfix]
+        public static void Postfix(PriceListController __instance, UpgradePrice[] ___mPrices)
+        {
+            var priceListRect = __instance.GetComponent<RectTransform>();
+
+            if (initialY < 0) initialY = priceListRect.sizeDelta.y;
+
+            priceListRect.sizeDelta = new Vector2(priceListRect.sizeDelta.x, initialY * ___mPrices.Length);
+        }
+    }
+
+    // For credits, don't display the current amount, just the price
+    [HarmonyPatch(typeof(UpgradePriceLabel), nameof(UpgradePriceLabel.Price), MethodType.Setter)]
+    public class UpgradePriceLabel_SetPrice
+    {
+        static CurrencyAsset creditsAsset;
+
+        [HarmonyPostfix]
+        public static void Postfix(UpgradePriceLabel __instance, UpgradePrice ___mPrice, TMPro.TextMeshProUGUI ___m_CurrentCurrencyText, TMPro.TextMeshProUGUI ___m_RequiredCurrencyText)
+        {
+            if (creditsAsset == null)
+            {
+                creditsAsset = Resources.FindObjectsOfTypeAll<CurrencyAsset>().Where(currAsset => currAsset.name == "Credits_CurrencyAsset").First();
+            }
+
+            if (___mPrice.CurrencyAsset == creditsAsset)
+            {
+                foreach(Transform childTransform in ___m_CurrentCurrencyText.transform.parent)
+                {
+                    if(childTransform == ___m_RequiredCurrencyText.transform)
+                    {
+                        ___m_RequiredCurrencyText.text = "$" + ___m_RequiredCurrencyText.text;
+                    }
+                    else
+                    {
+                        childTransform.gameObject.SetActive(false);
+                    }
+                }
+            }
         }
     }
 
