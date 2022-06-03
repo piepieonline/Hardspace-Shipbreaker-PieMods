@@ -1,0 +1,267 @@
+{
+	"enabled": true,
+	"alwaysOn": true,
+	"debugLog": true,
+	"minTotalObjectives": 2,
+	"maxTotalObjectives": 5,
+	"baseTimePerShipType": {
+		"Javelin_Industrial_Refueling_Lrg_ModuleConstructionAsset": 120,
+		"Javelin_Industrial_Cargo_Lrg_ModuleConstructionAsset": 120,
+		"Mistral_PATROLPrototype_ModuleConstructionAsset": 90,
+		"Mistral_TUGPrototype_ModuleConstructionAsset": 90,
+		"Mistral_CARGOPrototype_ModuleConstructionAsset": 90,
+		"Mackerel_Civilian_Transit_ModuleConstructionAsset": 60,
+		"Mackerel_Science_Shuttle_ModuleConstructionAsset": 90,
+		"Mackerel_Industrial_Cargo_ModuleConstructionAsset": 60,
+		"Mackerel_Civilian_Cargo_ModuleConstructionAsset": 60,
+		"Gecko_Industrial_Cargo_ModuleConstructionAsset": 150,
+		"Gecko_Commercial_Transit_ModuleConstructionAsset": 150,
+		"Gecko_Science_Stargazer_ModuleConstructionAsset": 150,
+		"Gecko_Industrial_Salvage_ModuleConstructionAsset": 150
+	},
+	"collectionObjects": {
+		"INFO_AirlockConsole": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 30,
+			"maxPercentTime": 30
+		},
+		"INFO_AirlockInterior": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 60,
+			"maxPercentTime": 60
+		},
+		"INFO_Amplifier": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 30,
+			"maxPercentTime": 60
+		},
+		"INFO_Antenna": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 0,
+			"maxPercentTime": 10
+		},
+		"INFO_Antenna_LongRange": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 0,
+			"maxPercentTime": 10
+		},
+		"INFO_AtmosphereRegulator": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 20,
+			"maxPercentTime": 20
+		},
+		"INFO_CargoContainer": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 30,
+			"maxPercentTime": 30
+		},
+		"INFO_CargoHatch": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 5,
+			"maxPercentTime": 5
+		},
+		"INFO_Chair_Flight": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 2,
+			"maxPercentTime": 2
+		},
+		"INFO_Chair_Wall": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 2,
+			"maxPercentTime": 2
+		},
+		"INFO_CommDish": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 2,
+			"maxPercentTime": 2
+		},
+		"INFO_Crate_Hard": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 30,
+			"maxPercentTime": 30
+		},
+		"INFO_Crate_Shipping": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 30,
+			"maxPercentTime": 30
+		},
+		"INFO_Crate_Soft": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 30,
+			"maxPercentTime": 30
+		},
+		"INFO_CryoTank": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 30,
+			"maxPercentTime": 30
+		},
+		"INFO_Forklift_New": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 30,
+			"maxPercentTime": 30
+		},
+		"INFO_FuelTank": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 30,
+			"maxPercentTime": 30
+		},
+		"INFO_Hoist": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 60,
+			"maxPercentTime": 60
+		},
+		"INFO_HydroponicsCabinet": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 20,
+			"maxPercentTime": 20
+		},
+		"INFO_Nacell": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 60,
+			"maxPercentTime": 60
+		},
+		"INFO_NacellDouble": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 60,
+			"maxPercentTime": 60
+		},
+		"INFO_PowerGenerator": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 30,
+			"maxPercentTime": 60
+		},
+		"INFO_PowerJunctionBox": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 20,
+			"maxPercentTime": 20
+		},
+		"INFO_Powercell": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 20,
+			"maxPercentTime": 20
+		},
+		"INFO_Prop_Fuse": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 30,
+			"maxPercentTime": 60
+		},
+		"INFO_Reactor_Class_I": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 45,
+			"maxPercentTime": 45
+		},
+		"INFO_Reactor_Class_II": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 90,
+			"maxPercentTime": 90
+		},
+		"INFO_SensorTower": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 15,
+			"maxPercentTime": 15
+		},
+		"INFO_SensorsArray": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 15,
+			"maxPercentTime": 15
+		},
+		"INFO_Sign": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 30,
+			"maxPercentTime": 60
+		},
+		"INFO_SolarBattery": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 15,
+			"maxPercentTime": 15
+		},
+		"INFO_StorageBin": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 30,
+			"maxPercentTime": 30
+		},
+		"INFO_Table": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 30,
+			"maxPercentTime": 60
+		},
+		"INFO_Terminal_Standard": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 15,
+			"maxPercentTime": 15
+		},
+		"INFO_ThermalRegulatorHeatSink": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 20,
+			"maxPercentTime": 20
+		},
+		"INFO_Thruster_Class_I": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 30,
+			"maxPercentTime": 30
+		},
+		"INFO_Thruster_Class_II": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 60,
+			"maxPercentTime": 60
+		},
+		"INFO_Thruster_Class_X_Fuel_Injector": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 30,
+			"maxPercentTime": 60
+		},
+		"INFO_Thruster_Class_X_Fuel_Injector_CoverPlate": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 30,
+			"maxPercentTime": 60
+		},
+		"INFO_Thruster_Engine": {
+			"minPercent": 1,
+			"maxPercent": 1,
+			"minPercentTime": 30,
+			"maxPercentTime": 60
+		}
+	},
+	"invalidCollectionObjects": [
+		"INFO_Light"
+	]
+}
