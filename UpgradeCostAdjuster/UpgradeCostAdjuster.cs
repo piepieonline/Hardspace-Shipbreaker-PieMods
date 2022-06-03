@@ -12,11 +12,18 @@ namespace UpgradeCostAdjuster
         private void Awake()
         {
             // Plugin startup logic
-            LoggerInstance = Logger;
-            new Harmony($"{PluginInfo.PLUGIN_GUID}").PatchAll();
-            Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is patched!");
             Settings.Load();
-            Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
+            if(Settings.settings.enabled)
+            {
+                LoggerInstance = Logger;
+                new Harmony($"{PluginInfo.PLUGIN_GUID}").PatchAll();
+                Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_NAME} is patched");
+                Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_NAME} is loaded!");
+            }
+            else
+            {
+                Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_NAME} is disabled");
+            }
         }
     }
 }

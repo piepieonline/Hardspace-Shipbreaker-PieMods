@@ -9,6 +9,7 @@ namespace UpgradeCostAdjuster
 {
     public class Settings
     {
+        public bool enabled;
         public float globalLTCostMultiplier;
         public float globalLTToCreditFactor;
         public int globalRequiredLevelDefaultOverride;

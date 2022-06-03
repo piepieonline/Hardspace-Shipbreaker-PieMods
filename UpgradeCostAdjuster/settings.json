@@ -1,4 +1,5 @@
 {
+  "enabled": true,
   "globalLTCostMultiplier":  2,
   "globalLTToCreditFactor": -1,
   "globalRequiredLevelDefaultOverride":  -1,
