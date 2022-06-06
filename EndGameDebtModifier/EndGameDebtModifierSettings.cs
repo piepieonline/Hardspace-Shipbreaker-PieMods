@@ -5,6 +5,7 @@ namespace EndGameDebtModifier
     public class Settings
     {
         public bool enabled;
+        public bool debugLog;
 
         public static Settings settings;
 

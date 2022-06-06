@@ -17,13 +17,28 @@ namespace EndGameDebtModifier
             [HarmonyPrefix]
             public static void Prefix(ref PlayerProfile playerProfile)
             {
-				if(playerProfile.DebtPaidOff && EndGameDebtModifier.HasAddedDebt[playerProfile])
+                if (Settings.settings.debugLog)
+                    Console.WriteLine($"Checking debt before saving - {playerProfile.ProfileName}");
+                if (playerProfile.DebtPaidOff && EndGameDebtModifier.HasAddedDebt[playerProfile])
                 {
                     Console.WriteLine($"Removing debt before saving - {playerProfile.ProfileName}");
                     playerProfile.CurrencyController.ChangeCurrency(playerProfile.DifficultyMode.DebtInterestAsset.Data.Currency.ID, (float)playerProfile.DifficultyMode.StartingDebtAmount, true);
                     EndGameDebtModifier.HasAddedDebt[playerProfile] = false;
                 }
 			}
+
+            [HarmonyPostfix]
+            public static void Postfix(ref PlayerProfile playerProfile)
+            {
+                if (Settings.settings.debugLog)
+                    Console.WriteLine($"Checking debt after saving - {playerProfile.ProfileName}");
+                if (playerProfile.DebtPaidOff && (!EndGameDebtModifier.HasAddedDebt.ContainsKey(playerProfile) || !EndGameDebtModifier.HasAddedDebt[playerProfile]))
+                {
+                    Console.WriteLine($"Adding debt after saving - {playerProfile.ProfileName}");
+                    playerProfile.CurrencyController.ChangeCurrency(playerProfile.DifficultyMode.DebtInterestAsset.Data.Currency.ID, (float)playerProfile.DifficultyMode.StartingDebtAmount, false);
+                    EndGameDebtModifier.HasAddedDebt[playerProfile] = true;
+                }
+            }
         }
         
         [HarmonyPatch(typeof(PlayerProfileSaveLoadManager), "DeserializePlayerProfile")]
@@ -32,12 +47,15 @@ namespace EndGameDebtModifier
             [HarmonyPostfix]
             public static void Postfix(ref PlayerProfile playerProfile)
             {
-                if (playerProfile.DebtPaidOff)
+                if (Settings.settings.debugLog)
+                    Console.WriteLine($"Checking debt after loading - {playerProfile.ProfileName}");
+                if (playerProfile.DebtPaidOff && (!EndGameDebtModifier.HasAddedDebt.ContainsKey(playerProfile) || !EndGameDebtModifier.HasAddedDebt[playerProfile]))
                 {
                     Console.WriteLine($"Adding debt after loading - {playerProfile.ProfileName}");
                     playerProfile.CurrencyController.ChangeCurrency(playerProfile.DifficultyMode.DebtInterestAsset.Data.Currency.ID, (float)playerProfile.DifficultyMode.StartingDebtAmount, false);
                     EndGameDebtModifier.HasAddedDebt[playerProfile] = true;
                 }
+                
             }
         }
     }

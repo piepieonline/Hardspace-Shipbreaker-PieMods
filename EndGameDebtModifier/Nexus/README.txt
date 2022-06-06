@@ -10,6 +10,14 @@ Known quirks:
 * Actually completing IA with this mod enabled is untested... But it should work
 * The computer will let you terminate your contract even if you still have money owing
 
+If something goes wrong:
+
+If something goes wrong, don't relaunch the game straight away. 
+1. Make a copy of "%APPDATA%\..\LocalLow\Blackbird Interactive\Hardspace_ Shipbreaker\Player.log"
+2. Make another backup of your profiles, as above
+3. Send me the log
+3. Relaunch the game - it's quite possible it'll have fixed itself.
+
 Installation:
 
     Download the latest 64 bit (x64) version of BepInEx 5 (5.4.19 at time of writing) from https://github.com/BepInEx/BepInEx/releases
