@@ -5,7 +5,15 @@ VisualStudioVersion = 17.0.32112.339
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PieChallengeMode", "PieChallengeMode\PieChallengeMode.csproj", "{1C8684FE-B87D-4DAA-80EF-923E036F395E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UpgradeCostAdjuster", "UpgradeCostAdjuster\UpgradeCostAdjuster.csproj", "{1E8B606D-1085-4ED9-8B15-B74E2734CCFC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UpgradeCostAdjuster", "UpgradeCostAdjuster\UpgradeCostAdjuster.csproj", "{1E8B606D-1085-4ED9-8B15-B74E2734CCFC}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EndGameDebtModifier", "EndGameDebtModifier\EndGameDebtModifier.csproj", "{7C1832B0-D0FC-4E28-9880-706F4CC8E369}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestProject", "TestProject\TestProject.csproj", "{D7C527F0-F0FC-4F68-8CDE-B4FB48EDB5F1}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestProjectPatcher", "TestProjectPatcher\TestProjectPatcher.csproj", "{D2412D0A-59CA-4ABB-88F8-378C39F2F786}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FOVAdjuster", "FOVAdjuster\FOVAdjuster.csproj", "{41D321A1-12E0-4067-97B4-F32BD90ABCE6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +29,21 @@ Global
 		{1E8B606D-1085-4ED9-8B15-B74E2734CCFC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1E8B606D-1085-4ED9-8B15-B74E2734CCFC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1E8B606D-1085-4ED9-8B15-B74E2734CCFC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7C1832B0-D0FC-4E28-9880-706F4CC8E369}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C1832B0-D0FC-4E28-9880-706F4CC8E369}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C1832B0-D0FC-4E28-9880-706F4CC8E369}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C1832B0-D0FC-4E28-9880-706F4CC8E369}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D7C527F0-F0FC-4F68-8CDE-B4FB48EDB5F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D7C527F0-F0FC-4F68-8CDE-B4FB48EDB5F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D7C527F0-F0FC-4F68-8CDE-B4FB48EDB5F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D7C527F0-F0FC-4F68-8CDE-B4FB48EDB5F1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D2412D0A-59CA-4ABB-88F8-378C39F2F786}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D2412D0A-59CA-4ABB-88F8-378C39F2F786}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D2412D0A-59CA-4ABB-88F8-378C39F2F786}.Release|Any CPU.Build.0 = Release|Any CPU
+		{41D321A1-12E0-4067-97B4-F32BD90ABCE6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{41D321A1-12E0-4067-97B4-F32BD90ABCE6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{41D321A1-12E0-4067-97B4-F32BD90ABCE6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{41D321A1-12E0-4067-97B4-F32BD90ABCE6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

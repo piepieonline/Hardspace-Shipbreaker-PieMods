@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <AssemblyName>FOVAdjuster</AssemblyName>
+    <Description>Adjust the FOV and helmet</Description>
+    <Version>0.0.1</Version>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />
+    <PackageReference Include="BepInEx.Core" Version="5.*" />
+    <PackageReference Include="BepInEx.PluginInfoProps" Version="1.*" />
+    <PackageReference Include="UnityEngine.Modules" Version="2020.3.17" IncludeAssets="compile" />
+  </ItemGroup>
+  
+  <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Reference Include="BBI.Unity.Game">
+      <HintPath>..\..\..\..\..\Games\Xbox\Hardspace- Shipbreaker\Content\Shipbreaker_Data\Managed\BBI.Unity.Game.dll</HintPath>
+    </Reference>
+    <Reference Include="Carbon.Core">
+      <HintPath>..\..\..\..\..\Games\Xbox\Hardspace- Shipbreaker\Content\Shipbreaker_Data\Managed\Carbon.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\..\..\..\..\Games\Xbox\Hardspace- Shipbreaker\Content\Shipbreaker_Data\Managed\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+    <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+	    <Exec Command="copy /Y &quot;$(TargetDir)$(TargetName).dll&quot; &quot;D:\Games\Xbox\Hardspace- Shipbreaker\Content\BepInEx\plugins\$(ProjectName)&quot;&#xD;&#xA;copy /Y &quot;$(TargetDir)$(TargetName).pdb&quot; &quot;D:\Games\Xbox\Hardspace- Shipbreaker\Content\BepInEx\plugins\$(ProjectName)&quot;&#xD;&#xA;copy /Y &quot;$(ProjectDir)\settings.json&quot; &quot;D:\Games\Xbox\Hardspace- Shipbreaker\Content\BepInEx\plugins\$(ProjectName)&quot;&#xD;&#xA;copy /Y &quot;$(ProjectDir)\Nexus\README.txt&quot; &quot;D:\Games\Xbox\Hardspace- Shipbreaker\Content\BepInEx\plugins\$(ProjectName)&quot;" />
+    </Target>
+</Project>

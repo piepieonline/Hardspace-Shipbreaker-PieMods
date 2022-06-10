@@ -1,0 +1,11 @@
+{
+  "enabled": true,
+  "fov": 72,
+  "showHelmet": true,
+  "debugLogChanges": false,
+  "toolOffsetAt90": 0.8,
+  "smashScaleAt90": 1.5,
+  "damageVFXGameObjectNames": [
+    "FX_ShatteredGlass_Helmet_01(Clone)"
+  ]
+}
