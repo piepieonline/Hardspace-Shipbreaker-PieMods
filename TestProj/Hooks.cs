@@ -98,15 +98,16 @@ namespace TestProj
         {
             var addressableType = System.Reflection.Assembly.GetAssembly(typeof(BBI.Unity.Game.SecuringObjectRemovedEvent)).GetType("BBI.Unity.Game.AddressableLoader");
 
-            if (arg.Result.TryGetComponent(addressableType, out var loader))
+            foreach (var addressableGO in arg.Result.GetComponentsInChildren(addressableType))
+            // if (arg.Result.TryGetComponent(addressableType, out var loader))
             {
-                List<string> refs = (List<string>)addressableType.GetField("refs").GetValue(loader);
+                List<string> refs = (List<string>)addressableType.GetField("refs").GetValue(addressableGO);
                 for (int i = 0; i < refs.Count; i++)
                 {
                     Console.WriteLine($"Loading GO ref {refs[i]}");
 
                     Addressables.ResourceManager.CreateChainOperation<GameObject, GameObject>(
-                        Addressables.InstantiateAsync(new AssetReferenceGameObject(refs[i]), arg.Result.transform.GetChild(i)), GameObjectReady)
+                        Addressables.InstantiateAsync(new AssetReferenceGameObject(refs[i]), addressableGO.transform), GameObjectReady)
                     ;
 
                 }
@@ -127,7 +128,7 @@ namespace TestProj
                     {
                         Console.WriteLine($"Loading SO ref {refs[i]}");
 
-                        var comp = arg.Result.GetComponents<Component>().Where(comp => comp.GetType().ToString() == comps[i]).First();
+                        var comp = addressableSO.GetComponents<Component>().Where(comp => comp.GetType().ToString() == comps[i]).First();
                         System.Reflection.FieldInfo fi = comp.GetType().GetField(fields[i], System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                         fieldToIndex[fi] = comp;
 
