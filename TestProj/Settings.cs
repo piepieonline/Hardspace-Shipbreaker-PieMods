@@ -10,6 +10,7 @@ namespace TestProj
     public class Settings
     {
         public bool enabled;
+        public string assetReferenceGameObject;
 
         public static Settings settings;
 

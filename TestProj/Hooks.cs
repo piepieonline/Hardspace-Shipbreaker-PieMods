@@ -10,19 +10,6 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace TestProj
 {
-    [HarmonyPatch(typeof(ShipPreview), "GatherModuleGroupData")]
-    public class ShipPreview_GatherModuleGroupData
-    {
-        public static Dictionary<ShipPreview, ModuleGroupSummary> ModuleGroupSummaries = new Dictionary<ShipPreview, ModuleGroupSummary>();
-
-        [HarmonyPrefix]
-        public static void Prefix(ShipPreview __instance, ModuleGroupSummary moduleGroupSummary, ShipPreview.OptionalCreateParams optionalParams)
-        {
-            Console.WriteLine("ShipPreview_GatherModuleGroupData called");
-            ModuleGroupSummaries[__instance] = moduleGroupSummary;
-        }
-    }
-
     [HarmonyPatch(typeof(ScriptableObject), MethodType.Constructor)]
     public class ScriptableObject_ScriptableObject
     {
@@ -72,28 +59,6 @@ namespace TestProj
     {
         static Dictionary<System.Reflection.FieldInfo, UnityEngine.Component> fieldToIndex = new Dictionary<System.Reflection.FieldInfo, UnityEngine.Component>();
 
-        [HarmonyPrefix]
-        public static bool HarmonyPrefix(ref UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle<GameObject> __result, object key, Vector3 position, Quaternion rotation, Transform parent, bool trackHandle)
-        {
-            Console.WriteLine("prefix!");
-            return true;
-
-            if (key.ToString() == "[b0a23fd93bc49804b982682709171202]")
-            {
-                __result = Addressables.InstantiateAsync(new AssetReferenceGameObject("2938e77a1793e5741af97e5417386f30"), position, rotation, parent, trackHandle);
-                return false;
-            }
-
-            Console.WriteLine(key.GetType());
-            Console.WriteLine(key.ToString());
-            return true;
-
-            // "PRF_MACKEREL Root Module"
-            // PRF_CargoFloor10_CanCanCan
-            // 3d5e96aef3a7b6048a24f7c0e902fdb9
-            // if(key.ToString() == "[Assets/CustomRootModule.prefab]")
-        }
-
         static AsyncOperationHandle<GameObject> GameObjectReady(AsyncOperationHandle<GameObject> arg)
         {
             var addressableType = System.Reflection.Assembly.GetAssembly(typeof(BBI.Unity.Game.SecuringObjectRemovedEvent)).GetType("BBI.Unity.Game.AddressableLoader");
@@ -117,30 +82,10 @@ namespace TestProj
             {
                 var addressableSOType = System.Reflection.Assembly.GetAssembly(typeof(BBI.Unity.Game.SecuringObjectRemovedEvent)).GetType("BBI.Unity.Game.AddressableSOLoader");
 
-                foreach(var addressableSO in arg.Result.GetComponentsInChildren(addressableSOType))
+                foreach (var addressableSO in arg.Result.GetComponentsInChildren(addressableSOType))
                 // if (arg.Result.TryGetComponent(addressableSOType, out var addressableSO))
                 {
-                    List<string> comps = (List<string>)addressableSOType.GetField("comp").GetValue(addressableSO);
-                    List<string> fields = (List<string>)addressableSOType.GetField("field").GetValue(addressableSO);
-                    List<string> refs = (List<string>)addressableSOType.GetField("refs").GetValue(addressableSO);
-
-                    for (int i = 0; i < refs.Count; i++)
-                    {
-                        Console.WriteLine($"Loading SO ref {refs[i]}");
-
-                        var comp = addressableSO.GetComponents<Component>().Where(comp => comp.GetType().ToString() == comps[i]).First();
-                        System.Reflection.FieldInfo fi = comp.GetType().GetField(fields[i], System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                        fieldToIndex[fi] = comp;
-
-                        Addressables.LoadAssetAsync<ScriptableObject>(new AssetReferenceScriptableObject(refs[i])).Completed += res =>
-                        {
-                            if (res.IsValid())
-                            {
-                                fi.SetValue(fieldToIndex[fi], res.Result);
-                            }
-                            fieldToIndex.Remove(fi);
-                        };
-                    }
+                    LoadScriptableObjectReferences(addressableSO);
                 }
 
             }
@@ -158,43 +103,86 @@ namespace TestProj
         {
             Console.WriteLine("starting post");
             __result = Addressables.ResourceManager.CreateChainOperation<GameObject, GameObject>(__result, GameObjectReady);
+        }
 
-            // "PRF_MACKEREL Root Module"
-            // PRF_CargoFloor10_CanCanCan
-            // 3d5e96aef3a7b6048a24f7c0e902fdb9
-            // if(key.ToString() == "[Assets/CustomRootModule.prefab]")
+        public static void LoadScriptableObjectReferences(Component addressableSO)
+        {
+            var addressableSOType = System.Reflection.Assembly.GetAssembly(typeof(BBI.Unity.Game.SecuringObjectRemovedEvent)).GetType("BBI.Unity.Game.AddressableSOLoader");
+
+            List<string> comps = (List<string>)addressableSOType.GetField("comp").GetValue(addressableSO);
+            List<string> fields = (List<string>)addressableSOType.GetField("field").GetValue(addressableSO);
+            List<string> refs = (List<string>)addressableSOType.GetField("refs").GetValue(addressableSO);
+
+            for (int i = 0; i < refs.Count; i++)
+            {
+                Console.WriteLine($"Loading SO ref {refs[i]}");
+
+                var comp = addressableSO.GetComponents<Component>().Where(comp => comp.GetType().ToString() == comps[i]).First();
+                System.Reflection.FieldInfo fi = comp.GetType().GetField(fields[i], System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                fieldToIndex[fi] = comp;
+
+                Addressables.LoadAssetAsync<ScriptableObject>(new AssetReferenceScriptableObject(refs[i])).Completed += res =>
+                {
+                    if (res.IsValid())
+                    {
+                        fi.SetValue(fieldToIndex[fi], res.Result);
+                    }
+                    fieldToIndex.Remove(fi);
+                };
+            }
         }
     }
 
-    /*
-    [HarmonyPatch(typeof(Addressables), "LoadAssetAsync", new Type[] { typeof(object) })]
+
+    [HarmonyPatch()]
     public class Addressables_LoadAssetAsync
     {
         public static Dictionary<string, string> assetReferences = new Dictionary<string, string>();
 
-        [HarmonyPostfix]
-        public static void HarmonyPostfix(ref UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle __result, object key)
+        static System.Reflection.MethodInfo TargetMethod()
         {
-            __result.Completed += res =>
-            {
-                Console.WriteLine((res.Result).ToString() + " " + key.ToString());
-                assetReferences[(res.Result).ToString()] = key.ToString();
-            };
+            return typeof(Addressables).GetMethod("LoadAssetAsync", new Type[] { typeof(object) }).MakeGenericMethod(typeof(UnityEngine.Object));
         }
-    }
-    */
 
-    /*
-    [HarmonyPatch(typeof(HardPoint), "Awake")]
-    public class HardPoint_Awake
-    {
-        [HarmonyPrefix]
-        public static void Prefix(HardPoint __instance)
+        [HarmonyPostfix]
+        public static void HarmonyPostfix(ref AsyncOperationHandle<UnityEngine.Object> __result, object key)
         {
-            Console.WriteLine($"HardPoint {__instance.name} awake");
+            bool newResultValid = false;
+            var newResult = Addressables.ResourceManager.CreateChainOperation<UnityEngine.Object, UnityEngine.Object>(__result, arg =>
+            {
+                try
+                {
+                    GameObject result = (GameObject)arg.Result;
+
+                    var addressableSOType = System.Reflection.Assembly.GetAssembly(typeof(BBI.Unity.Game.SecuringObjectRemovedEvent)).GetType("BBI.Unity.Game.AddressableSOLoader");
+
+                    // Console.WriteLine("Loading references");
+
+                    foreach (var addressableSO in result.GetComponentsInChildren(addressableSOType))
+                    // if (arg.Result.TryGetComponent(addressableSOType, out var addressableSO))
+                    {
+                        Addressables_InstantiateAsync.LoadScriptableObjectReferences((MonoBehaviour)addressableSO);
+                    }
+
+                }
+                catch (InvalidCastException ex)
+                {
+                    // Do nothing, expected
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("SO loading exception!");
+                    Console.WriteLine(ex.Message);
+                }
+
+                // newResultValid = true;
+                return Addressables.ResourceManager.CreateCompletedOperation(arg.Result, string.Empty);
+            });
+
+            if (newResultValid)
+                __result = newResult;
         }
     }
-    */
 
     [HarmonyPatch(typeof(ShipRandomizationHelper), "ConstructModuleGroup")]
     public class ShipRandomizationHelper_ConstructModuleGroup
@@ -207,30 +195,38 @@ namespace TestProj
             System.Reflection.FieldInfo fi = typeof(ModuleConstructionAsset.ModuleConstructionData).GetField("m_RootModuleRef", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             // fi.SetValue(conAsset.Data, Module_CreateAndLoadAsync.LoadedRefs["PRF_CargoFloor10_CanCanCan"]);
 
-            // Custom:
-            // var newValue = new AssetReferenceGameObject("Assets/CustomRootModule.prefab");
-            // var newValue = new AssetReferenceGameObject("41ec03b2a742f9d43bf0a13bb5ba8fe2"); // CuttableDemo
-            // var newValue = new AssetReferenceGameObject("985e889cb1a325c4ba92855918db3bcf"); // Assets/CustomCrate.prefab
-            // var newValue = new AssetReferenceGameObject("ef1e539d57a75124f92c7ba11c2892e7"); // Assets/TestBeams.prefab
-            // var newValue = new AssetReferenceGameObject("245edd5faef68494097595f84d147652"); // Assets/PRF_Crate_Hard(Clone).prefab
-            // var newValue = new AssetReferenceGameObject("a6c97fb2efb3bb14faac21c54b561293"); // Assets/CustomOperation/MackNoseRefs.prefab
-            // var newValue = new AssetReferenceGameObject("102453e3bd4709c41b25e2fc6f6fe3f7"); // Assets/CustomOperation/AirlockRef.prefab
-            // var newValue = new AssetReferenceGameObject("f2ade62975d33c5408fc695ba5be1d27"); // Assets/CustomOperation/BoxRef.prefab
-            var newValue = new AssetReferenceGameObject("41de0a0595534cc4eb29ba7c4baf3a46"); // Assets/CustomOperation/BoxRefAirlock.prefab
+            AssetReferenceGameObject newValue;
+            if (Settings.settings.assetReferenceGameObject != null && Settings.settings.assetReferenceGameObject != "")
+            {
+                newValue = new AssetReferenceGameObject(Settings.settings.assetReferenceGameObject);
+            }
+            else
+            {
+                // Custom:
+                // newValue = new AssetReferenceGameObject("Assets/CustomRootModule.prefab");
+                // newValue = new AssetReferenceGameObject("41ec03b2a742f9d43bf0a13bb5ba8fe2"); // CuttableDemo
+                // newValue = new AssetReferenceGameObject("985e889cb1a325c4ba92855918db3bcf"); // Assets/CustomCrate.prefab
+                // newValue = new AssetReferenceGameObject("ef1e539d57a75124f92c7ba11c2892e7"); // Assets/TestBeams.prefab
+                // newValue = new AssetReferenceGameObject("245edd5faef68494097595f84d147652"); // Assets/PRF_Crate_Hard(Clone).prefab
+                // newValue = new AssetReferenceGameObject("a6c97fb2efb3bb14faac21c54b561293"); // Assets/CustomOperation/MackNoseRefs.prefab
+                // newValue = new AssetReferenceGameObject("102453e3bd4709c41b25e2fc6f6fe3f7"); // Assets/CustomOperation/AirlockRef.prefab
+                // newValue = new AssetReferenceGameObject("f2ade62975d33c5408fc695ba5be1d27"); // Assets/CustomOperation/BoxRef.prefab
+                // newValue = new AssetReferenceGameObject("41de0a0595534cc4eb29ba7c4baf3a46"); // Assets/CustomOperation/BoxRefAirlock.prefab
+                newValue = new AssetReferenceGameObject("e723eba8ae422e84190e2971c9c374f5");    // Assets/CustomOperation/FirstShip.prefab
+                // newValue = new AssetReferenceGameObject("792652162aeed3342810ad6a261da3d2"); // Assets/CustomOperation/FirstShipSpawner.prefab
 
-            // Standard:
-            // var newValue = new AssetReferenceGameObject("Assets/Content/Prefabs/Objects/Structural/PRF_Cutpoint_Generic_1xBxB.prefab");
-            // var newValue = new AssetReferenceGameObject("e90d482ebb5084143872d4e498c6462b");
-            // var newValue = new AssetReferenceGameObject("3e84870b4ad837d458773aeaae90a447"); // Hard crate
-            // var newValue = new AssetReferenceGameObject("Assets/Content/Prefabs/Objects/Storage/PRF_Crate_Hard.prefab"); // Hard crate
-            //var newValue = new AssetReferenceGameObject("fd038d23f35b59747a22dec2f214b11f");
+                // Standard:
+                // newValue = new AssetReferenceGameObject("Assets/Content/Prefabs/Objects/Structural/PRF_Cutpoint_Generic_1xBxB.prefab");
+                // newValue = new AssetReferenceGameObject("e90d482ebb5084143872d4e498c6462b");
+                // newValue = new AssetReferenceGameObject("3e84870b4ad837d458773aeaae90a447"); // Hard crate
+                // newValue = new AssetReferenceGameObject("Assets/Content/Prefabs/Objects/Storage/PRF_Crate_Hard.prefab"); // Hard crate
+                // newValue = new AssetReferenceGameObject("fd038d23f35b59747a22dec2f214b11f");
 
-            // var newValue = new AssetReferenceGameObject("8a1c2cd36ea6fb14b8ce4f6e29bbafb8"); // PRF_CargoFloor10_CanCanCan
-            // var newValue = new AssetReferenceGameObject("fd038d23f35b59747a22dec2f214b11f"); // Ship Kit/Nodes/Mackerel/Core Segments/PRF_Mackerel_Airlock.prefab
-            // var newValue = new AssetReferenceGameObject("c205dbbc6d144134a872ec34bf213277"); // Assets/Content/Prefabs/Objects/_Object Groups/Hardpoint Group/Crew Bed Bunks/PRF_CrewBedBunksDouble01.prefab
-            // var newValue = new AssetReferenceGameObject("8d8c20336138f10499ab31e0b2dd8bb4"); // Working airlock - PRF_Mackerel_Airlock_Layout_AirlockPortWallStarboard(Clone)
-
-
+                // newValue = new AssetReferenceGameObject("8a1c2cd36ea6fb14b8ce4f6e29bbafb8"); // PRF_CargoFloor10_CanCanCan
+                // newValue = new AssetReferenceGameObject("fd038d23f35b59747a22dec2f214b11f"); // Ship Kit/Nodes/Mackerel/Core Segments/PRF_Mackerel_Airlock.prefab
+                // newValue = new AssetReferenceGameObject("c205dbbc6d144134a872ec34bf213277"); // Assets/Content/Prefabs/Objects/_Object Groups/Hardpoint Group/Crew Bed Bunks/PRF_CrewBedBunksDouble01.prefab
+                // newValue = new AssetReferenceGameObject("8d8c20336138f10499ab31e0b2dd8bb4"); // Working airlock - PRF_Mackerel_Airlock_Layout_AirlockPortWallStarboard(Clone)
+            }
 
             fi.SetValue(shipPreview.ConstructionAsset.Data, newValue);
 
