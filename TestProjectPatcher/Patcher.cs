@@ -33,8 +33,12 @@ public static class TestProjPatcher
 
         var newType = new TypeDefinition("BBI.Unity.Game", "AddressableLoader", TypeAttributes.Class | TypeAttributes.Public, entityData.BaseType);
 
-        newType.Fields.Add(new FieldDefinition("refs", FieldAttributes.Public,
-            module.ImportReference(typeof(List<>)).MakeGenericInstanceType(module.TypeSystem.String)));
+        newType.Fields.Add(new FieldDefinition("refs", FieldAttributes.Public, module.ImportReference(typeof(List<>)).MakeGenericInstanceType(module.TypeSystem.String)));
+        
+        newType.Fields.Add(new FieldDefinition("assetGUID", FieldAttributes.Public, module.ImportReference(typeof(string))));
+        newType.Fields.Add(new FieldDefinition("childPath", FieldAttributes.Public, module.ImportReference(typeof(string))));
+
+        newType.Fields.Add(new FieldDefinition("disabledChildren", FieldAttributes.Public, module.ImportReference(typeof(List<>)).MakeGenericInstanceType(module.TypeSystem.String)));
 
         assembly.MainModule.Types.Add(newType);
 

@@ -57,32 +57,72 @@ namespace TestProj
     [HarmonyPatch(typeof(Addressables), "InstantiateAsync", new Type[] { typeof(object), typeof(Vector3), typeof(Quaternion), typeof(Transform), typeof(bool) })]
     public class Addressables_InstantiateAsync
     {
-        static Dictionary<System.Reflection.FieldInfo, UnityEngine.Component> fieldToIndex = new Dictionary<System.Reflection.FieldInfo, UnityEngine.Component>();
-
         static AsyncOperationHandle<GameObject> GameObjectReady(AsyncOperationHandle<GameObject> arg)
+        {
+            var result = InstantiateChildren(arg.Result);
+
+            return Addressables.ResourceManager.CreateCompletedOperation(result, string.Empty);
+        }
+
+        static GameObject InstantiateChildren(GameObject parent)
         {
             var addressableType = System.Reflection.Assembly.GetAssembly(typeof(BBI.Unity.Game.SecuringObjectRemovedEvent)).GetType("BBI.Unity.Game.AddressableLoader");
 
-            foreach (var addressableGO in arg.Result.GetComponentsInChildren(addressableType))
+            foreach (var addressableGO in parent.GetComponentsInChildren(addressableType))
             // if (arg.Result.TryGetComponent(addressableType, out var loader))
             {
-                List<string> refs = (List<string>)addressableType.GetField("refs").GetValue(addressableGO);
-                for (int i = 0; i < refs.Count; i++)
-                {
-                    Console.WriteLine($"Loading GO ref {refs[i]}");
+                string assetGUID = (string)addressableType.GetField("assetGUID").GetValue(addressableGO);
+                string childPath = (string)addressableType.GetField("childPath").GetValue(addressableGO);
+                List<string> disabledChildren = (List<string>)addressableType.GetField("disabledChildren").GetValue(addressableGO);
 
-                    Addressables.ResourceManager.CreateChainOperation<GameObject, GameObject>(
-                        Addressables.InstantiateAsync(new AssetReferenceGameObject(refs[i]), addressableGO.transform), GameObjectReady)
-                    ;
+                Console.WriteLine($"Loading GO ref {assetGUID}");
 
-                }
+                Addressables.ResourceManager.CreateChainOperation<GameObject, GameObject>(
+                    Addressables.LoadAssetAsync<GameObject>(new AssetReferenceGameObject(assetGUID)), arg =>
+                    {
+                        GameObject result = arg.Result;
+                        if(!string.IsNullOrEmpty(childPath))
+                        {
+                            result = result.transform.Find(childPath)?.gameObject;
+                        }
+
+                        if(result == null)
+                        {
+                            Console.WriteLine($"ERROR: Can't find {childPath} in {assetGUID}");
+                            result = arg.Result;
+                        }
+
+                        result = InstantiateChildren(GameObject.Instantiate(result, addressableGO.transform));
+
+                        if (!string.IsNullOrEmpty(childPath))
+                        {
+                            result.transform.localPosition = Vector3.zero;
+                        }
+
+                        foreach(var child in disabledChildren)
+                        {
+                            var foundChild = result.transform.Find(child)?.gameObject;
+                            if (foundChild != null)
+                            {
+                                GameObject.Destroy(foundChild);
+                                Console.WriteLine($"Removing {child} from {assetGUID}");
+                            }
+                            else
+                            {
+                                Console.WriteLine($"ERROR: Can't find {child} from {assetGUID}");
+                            }
+                        }
+
+                        return Addressables.ResourceManager.CreateCompletedOperation(result, string.Empty);
+                    })
+                ;
             }
 
             try
             {
                 var addressableSOType = System.Reflection.Assembly.GetAssembly(typeof(BBI.Unity.Game.SecuringObjectRemovedEvent)).GetType("BBI.Unity.Game.AddressableSOLoader");
 
-                foreach (var addressableSO in arg.Result.GetComponentsInChildren(addressableSOType))
+                foreach (var addressableSO in parent.GetComponentsInChildren(addressableSOType))
                 // if (arg.Result.TryGetComponent(addressableSOType, out var addressableSO))
                 {
                     LoadScriptableObjectReferences(addressableSO);
@@ -95,13 +135,12 @@ namespace TestProj
                 Console.WriteLine(ex.Message);
             }
 
-            return Addressables.ResourceManager.CreateCompletedOperation(arg.Result, string.Empty);
+            return parent;
         }
 
         [HarmonyPostfix]
         public static void HarmonyPostfix(ref UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle<GameObject> __result, object key, Vector3 position, Quaternion rotation, Transform parent, bool trackHandle)
         {
-            Console.WriteLine("starting post");
             __result = Addressables.ResourceManager.CreateChainOperation<GameObject, GameObject>(__result, GameObjectReady);
         }
 
@@ -119,15 +158,13 @@ namespace TestProj
 
                 var comp = addressableSO.GetComponents<Component>().Where(comp => comp.GetType().ToString() == comps[i]).First();
                 System.Reflection.FieldInfo fi = comp.GetType().GetField(fields[i], System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                fieldToIndex[fi] = comp;
 
                 Addressables.LoadAssetAsync<ScriptableObject>(new AssetReferenceScriptableObject(refs[i])).Completed += res =>
                 {
                     if (res.IsValid())
                     {
-                        fi.SetValue(fieldToIndex[fi], res.Result);
+                        fi.SetValue(comp, res.Result);
                     }
-                    fieldToIndex.Remove(fi);
                 };
             }
         }
@@ -245,9 +282,23 @@ namespace TestProj
 
             if (sev == Carbon.Core.Log.Severity.Error)
             {
-                var stackTrace = new System.Diagnostics.StackTrace(2, true);
-                System.IO.File.WriteAllText("D:\\exception.txt", stackTrace.GetFrame(0).GetType() + "\r\n" + stackTrace.ToString());
+                try
+                {
+                    var stackTrace = new System.Diagnostics.StackTrace(2, true);
+                    System.IO.File.WriteAllText("D:\\exception.txt", stackTrace.GetFrame(0).GetType() + "\r\n" + stackTrace.ToString());
+                }
+                catch { }
             }
+        }
+    }
+
+    [HarmonyPatch(typeof(PlayableArea), "GetPlayableAreaState")]
+    public class PlayableAreaState_PlayableAreaState
+    {
+        public static bool Prefix(ref PlayableArea.PlayableAreaState __result)
+        {
+            __result = PlayableArea.PlayableAreaState.Safe;
+            return false;
         }
     }
 }

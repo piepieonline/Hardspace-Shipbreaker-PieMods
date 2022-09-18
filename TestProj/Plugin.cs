@@ -12,6 +12,18 @@ namespace TestProj
     {
         private void Awake()
         {
+            try
+            {
+                BBI.Unity.Game.Main.EventSystem.AddHandler<BBI.Unity.Game.RoomDecompressedEvent>(evt =>
+                {
+                    Logger.LogInfo($"evt");
+                    Logger.LogInfo($"Decomp force: {evt.DecompressionForce}");
+                });
+            } catch (System.Exception ex)
+            {
+                Logger.LogInfo(ex.Message);
+            }
+
             // Plugin startup logic
             Settings.Load();
             if (Settings.settings.enabled)
@@ -19,7 +31,7 @@ namespace TestProj
                 new Harmony($"{PluginInfo.PLUGIN_GUID}").PatchAll();
                 Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_NAME} is patched");
 
-                Addressables.LoadContentCatalogAsync((System.IO.Path.Combine(System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "catalog.json")));
+                Addressables.LoadContentCatalogAsync((System.IO.Path.Combine(System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "FirstShip", "catalog.json")));
 
                 Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_NAME} is loaded!");
             }
