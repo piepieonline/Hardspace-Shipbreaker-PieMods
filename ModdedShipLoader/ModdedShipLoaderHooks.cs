@@ -147,10 +147,13 @@ namespace ModdedShipLoader
         {
             [HarmonyPrefix]
             public static bool Prefix(
-                LevelSelectButton __instance,
                 LevelAsset.LevelData ___mLevelToLoad
             )
             {
+                // If we don't have a description, it's definitely not a custom level
+                if (___mLevelToLoad.LevelDescriptionFull == null)
+                    return true;
+
                 guidToSwapTo = ___mLevelToLoad.LevelDescriptionFull.StartsWith("CUSTOM") ? ___mLevelToLoad.LevelDescriptionFull.Split(':')[1] : null;
                 Log($"Loading: {___mLevelToLoad.LevelDisplayName}");
                 Log($"Loading: {___mLevelToLoad.LevelDescriptionFull}");
@@ -186,9 +189,44 @@ namespace ModdedShipLoader
         [HarmonyPatch(typeof(Addressables), "InstantiateAsync", new Type[] { typeof(object), typeof(Vector3), typeof(Quaternion), typeof(Transform), typeof(bool) })]
         public class Addressables_InstantiateAsync
         {
+            static Dictionary<string, Shader> shaderCache = new Dictionary<string, Shader>();
+            static Dictionary<string, string> shaderToReference = new Dictionary<string, string>() 
+            {
+                { "Fake/_Lynx/Surface/HDRP/Lit", "2ff41ba12704fae4fbdb6d3886c89479" }
+            };
+
+            static void ReplaceShaders(GameObject parent)
+            {
+                foreach (var renderer in parent.GetComponentsInChildren<MeshRenderer>())
+                {
+                    var shaderName = renderer.sharedMaterial.shader.name;
+                    if (shaderToReference.ContainsKey(shaderName))
+                    {
+                        if(shaderCache.ContainsKey(shaderName))
+                        {
+                            renderer.sharedMaterial.shader = shaderCache[shaderName];
+                        }
+                        else
+                        {
+                            UnityEngine.AddressableAssets.Addressables.LoadAssetAsync<Shader>(new UnityEngine.AddressableAssets.AssetReference(shaderToReference[shaderName])).Completed += res =>
+                            {
+                                renderer.sharedMaterial.shader = res.Result;
+                                // Async, so it might already contain it by the time we call this
+                                if(!shaderCache.ContainsKey(shaderName))
+                                {
+                                    shaderCache.Add(shaderName, res.Result);
+                                }
+                            };
+                        }
+                    }
+                }
+            }
+
             static AsyncOperationHandle<GameObject> GameObjectReady(AsyncOperationHandle<GameObject> arg)
             {
                 var result = InstantiateChildren(arg.Result);
+
+                ReplaceShaders(result);
 
                 return Addressables.ResourceManager.CreateCompletedOperation(result, string.Empty);
             }
@@ -222,6 +260,8 @@ namespace ModdedShipLoader
                             }
 
                             result = InstantiateChildren(GameObject.Instantiate(result, addressableGO.transform));
+
+                            ReplaceShaders(result);
 
                             if (!string.IsNullOrEmpty(childPath))
                             {
