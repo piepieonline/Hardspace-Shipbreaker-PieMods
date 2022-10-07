@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using BepInEx.Logging;
 using Mono.Cecil;
@@ -51,7 +52,94 @@ public static class ModdedShipLoaderPreloadPatcher
 
         assembly.MainModule.Types.Add(newSOType);
 
+        logSource.LogInfo("Preloader patching (AssemblyCSharp) is successful!");
+    }
+}
 
-        logSource.LogInfo("Preloader patching is successful!");
+
+public static class ModdedShipLoaderPreloadPatcher2
+{
+    public static ManualLogSource logSource;
+
+    public static void Initialize()
+    {
+        logSource = Logger.CreateLogSource("Modded Ship Loader Preloader2");
+
+        /*
+        var assemblyResolver = new DefaultAssemblyResolver();
+        var assemblyLocation = System.IO.Path.GetDirectoryName("D:\\Games\\Xbox\\Hardspace- Shipbreaker\\Content\\Shipbreaker_Data\\Managed");
+        assemblyResolver.AddSearchDirectory(assemblyLocation);
+        */
+    }
+
+    public static IEnumerable<string> TargetDLLs { get; } = new[] { "BBI.Unity.Game.dll" };
+
+    public static string[] ResolveDirectories { get; set; } =
+        {
+            "D:\\Games\\Xbox\\Hardspace- Shipbreaker\\Content\\Shipbreaker_Data\\Managed\\"
+        };
+
+    // Patches the assemblies
+    public static void Patch(AssemblyDefinition assembly)
+    {
+        ModuleDefinition module = assembly.MainModule;
+
+        // var resolver = (BaseAssemblyResolver)assembly.AssemblyResolver;
+        var moduleResolver = (BaseAssemblyResolver)module.AssemblyResolver;
+
+        foreach (var dir in ResolveDirectories)
+        {
+            // resolver.AddSearchDirectory(dir);
+            moduleResolver.AddSearchDirectory(dir);
+        }
+
+        // resolver.ResolveFailure += ResolverOnResolveFailure;
+        // Add our dependency resolver to the assembly resolver of the module we are patching
+        moduleResolver.ResolveFailure += ResolverOnResolveFailure;
+
+        // monoModder.PerformPatches(monoModPath);
+
+        // Then remove our resolver after we are done patching to not interfere with other patchers
+        // moduleResolver.ResolveFailure -= ResolverOnResolveFailure;
+
+        var typesToModify = System.IO.File.ReadAllLines(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "TypesToModify.txt"));
+
+        foreach(var typeName in typesToModify)
+        {
+            assembly.MainModule.Types.Where(t => t.Name == typeName).First().Fields.Add(new FieldDefinition("AssetBasis", FieldAttributes.Public, module.ImportReference(typeof(string))));
+        }
+
+        logSource.LogInfo("Preloader patching (BBIUnityGame) is successful!");
+    }
+
+    private static AssemblyDefinition ResolverOnResolveFailure(object sender, AssemblyNameReference reference)
+    {
+        logSource.LogInfo($"Failure to find {reference.Name}");
+
+        foreach (var directory in ResolveDirectories)
+        {
+            var potentialDirectories = new List<string> { directory };
+
+            potentialDirectories.AddRange(Directory.GetDirectories(directory, "*", SearchOption.AllDirectories));
+
+            var potentialFiles = potentialDirectories.Select(x => Path.Combine(x, $"{reference.Name}.dll"))
+                                                     .Concat(potentialDirectories.Select(
+                                                                 x => Path.Combine(x, $"{reference.Name}.exe")));
+
+            foreach (string path in potentialFiles)
+            {
+                if (!File.Exists(path))
+                    continue;
+
+                var assembly = AssemblyDefinition.ReadAssembly(path, new ReaderParameters(ReadingMode.Deferred));
+
+                if (assembly.Name.Name == reference.Name)
+                    return assembly;
+
+                assembly.Dispose();
+            }
+        }
+
+        return null;
     }
 }

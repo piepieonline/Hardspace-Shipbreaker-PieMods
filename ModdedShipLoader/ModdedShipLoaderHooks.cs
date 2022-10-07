@@ -154,7 +154,7 @@ namespace ModdedShipLoader
                 if (___mLevelToLoad.LevelDescriptionFull == null)
                     return true;
 
-                guidToSwapTo = ___mLevelToLoad.LevelDescriptionFull.StartsWith("CUSTOM") ? ___mLevelToLoad.LevelDescriptionFull.Split(':')[1] : null;
+                guidToSwapTo = ___mLevelToLoad.LevelDescriptionFull.StartsWith("CUSTOM") ? ___mLevelToLoad.LevelDescriptionFull.Split(':')[1].Trim() : null;
                 Log($"Loading: {___mLevelToLoad.LevelDisplayName}");
                 Log($"Loading: {___mLevelToLoad.LevelDescriptionFull}");
                 return true;
@@ -177,7 +177,7 @@ namespace ModdedShipLoader
 
                     System.Reflection.FieldInfo fi = typeof(ModuleConstructionAsset.ModuleConstructionData).GetField("m_RootModuleRef", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 
-                    fi.SetValue(shipPreview.ConstructionAsset.Data, new AssetReferenceGameObject(guidToSwapTo));
+                    // fi.SetValue(shipPreview.ConstructionAsset.Data, new AssetReferenceGameObject(guidToSwapTo));
 
                     Log($"Swap done", true);
                 }
@@ -354,11 +354,12 @@ namespace ModdedShipLoader
             public static void HarmonyPostfix(ref AsyncOperationHandle<UnityEngine.Object> __result, object key)
             {
                 bool newResultValid = false;
-                var newResult = Addressables.ResourceManager.CreateChainOperation<UnityEngine.Object, UnityEngine.Object>(__result, arg =>
+
+                var newResult = Addressables.ResourceManager.CreateChainOperation<UnityEngine.Object, UnityEngine.Object>(__result, overrideResult =>
                 {
-                    try
+                    if(overrideResult.Result is GameObject)
                     {
-                        GameObject result = (GameObject)arg.Result;
+                        GameObject result = (GameObject)overrideResult.Result;
 
                         var addressableSOType = System.Reflection.Assembly.GetAssembly(typeof(BBI.Unity.Game.SecuringObjectRemovedEvent)).GetType("BBI.Unity.Game.AddressableSOLoader");
 
@@ -369,20 +370,70 @@ namespace ModdedShipLoader
                         {
                             Addressables_InstantiateAsync.LoadScriptableObjectReferences((MonoBehaviour)addressableSO);
                         }
+                    }    
 
-                    }
-                    catch (InvalidCastException ex)
+                    if (overrideResult.Result is TypeAsset)
                     {
-                        // Do nothing, expected
+                        // var res = (ModuleConstructionAsset)overrideResult.Result;
+                        // Log($"Key: {key}");
+                        // Log($"Found: {res.name}");
+                        // 64a1a1f3e77574f468b15c16dfe0229f
+
+                        string AssetBasis = (string)typeof(TypeAsset).GetField("AssetBasis")?.GetValue(overrideResult.Result);
+
+                        if (AssetBasis != "" && AssetBasis != null)
+                        {
+                            Log($"Basis Start: {overrideResult.Result.name} is based on {AssetBasis}");
+
+                            newResultValid = false;
+                            return Addressables.ResourceManager.CreateChainOperation<UnityEngine.Object, UnityEngine.Object>(
+                                Addressables.LoadAssetAsync<UnityEngine.Object>(new AssetReferenceScriptableObject(AssetBasis)), basisResult =>
+                                {
+                                    // ScriptableObject newSO = (ScriptableObject)UnityEngine.Object.Instantiate(res.Result);
+
+                                    var dataField = overrideResult.Result.GetType().GetField("Data");
+
+                                    var dataGot = dataField.GetValue(overrideResult.Result);
+                                    dataField.SetValue(overrideResult.Result, dataField.GetValue(basisResult.Result));
+
+                                    Log($"Member Start");
+                                    foreach (var member in dataField.FieldType.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance))
+                                    {
+                                        Log($"Member: {member.Name}");
+
+                                        var baseVal = member.GetValue(dataField.GetValue(basisResult.Result));
+                                        var overVal = member.GetValue(dataGot);
+
+                                        Log($"Values: {baseVal} < {overVal}");
+                                        Log($"Equal: {baseVal == overVal}");
+
+                                        if (overVal == null) continue;
+                                        if (overVal == baseVal) continue;
+
+                                        var assetGUIDField = overVal.GetType().GetProperty("AssetGUID", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.FlattenHierarchy);
+
+                                        if(assetGUIDField != null)
+                                        {
+                                            var assetGUID = (string)assetGUIDField.GetValue(overVal);
+
+                                            if (assetGUID != null && assetGUID == "") continue;
+                                        }
+
+                                        if (member.Name != "m_RootModuleRef") continue;
+
+                                        Log($"Setting member {member.Name} to {overVal} from {baseVal}");
+                                        member.SetValue(dataField.GetValue(overrideResult.Result), overVal);
+                                    }
+                                    Log($"Member done");
+
+                                    return Addressables.ResourceManager.CreateCompletedOperation((UnityEngine.Object)overrideResult.Result, string.Empty);
+                                });
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        Log("SO loading exception!");
-                        Log(ex.Message);
-                    }
+                
 
                     // newResultValid = true;
-                    return Addressables.ResourceManager.CreateCompletedOperation(arg.Result, string.Empty);
+                    return Addressables.ResourceManager.CreateCompletedOperation(overrideResult.Result, string.Empty);
                 });
 
                 if (newResultValid)

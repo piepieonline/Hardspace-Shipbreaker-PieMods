@@ -44,6 +44,9 @@ namespace ModdedShipLoader
                     Addressables.LoadContentCatalogAsync(tempCatalogPath).Completed += _ =>
                     {
                         System.IO.File.Delete(tempCatalogPath);
+
+                        // Force load modded levels - the game prewarms, so we need to as well
+                        Addressables.LoadAssetAsync<BBI.Unity.Game.ModuleConstructionAsset>("ModdedLevel");
                     };
                 }
 
