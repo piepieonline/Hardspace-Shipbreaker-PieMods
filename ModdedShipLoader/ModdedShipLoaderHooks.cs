@@ -15,7 +15,7 @@ namespace ModdedShipLoader
     {
         static void Log(string message, bool detailed = false)
         {
-            if((Settings.settings.debugLog && !detailed) || (Settings.settings.debugLogDetailed && detailed))
+            if ((Settings.settings.debugLog && !detailed) || (Settings.settings.debugLogDetailed && detailed))
             {
                 ModdedShipLoader.LoggerInstance.LogInfo(message);
             }
@@ -27,7 +27,7 @@ namespace ModdedShipLoader
         public class Addressables_InstantiateAsync
         {
             static Dictionary<string, Shader> shaderCache = new Dictionary<string, Shader>();
-            static Dictionary<string, string> shaderToReference = new Dictionary<string, string>() 
+            static Dictionary<string, string> shaderToReference = new Dictionary<string, string>()
             {
                 { "Fake/_Lynx/Surface/HDRP/Lit", "2ff41ba12704fae4fbdb6d3886c89479" }
             };
@@ -39,7 +39,7 @@ namespace ModdedShipLoader
                     var shaderName = renderer.sharedMaterial.shader.name;
                     if (shaderToReference.ContainsKey(shaderName))
                     {
-                        if(shaderCache.ContainsKey(shaderName))
+                        if (shaderCache.ContainsKey(shaderName))
                         {
                             renderer.sharedMaterial.shader = shaderCache[shaderName];
                         }
@@ -49,7 +49,7 @@ namespace ModdedShipLoader
                             {
                                 renderer.sharedMaterial.shader = res.Result;
                                 // Async, so it might already contain it by the time we call this
-                                if(!shaderCache.ContainsKey(shaderName))
+                                if (!shaderCache.ContainsKey(shaderName))
                                 {
                                     shaderCache.Add(shaderName, res.Result);
                                 }
@@ -226,16 +226,16 @@ namespace ModdedShipLoader
                                     var dataGot = dataField.GetValue(overrideResult.Result);
                                     // dataField.SetValue(overrideResult.Result, dataField.GetValue(basisResult.Result));
 
-                                    Log($"Member Start");
+                                    Log($"Member Start", true);
                                     foreach (var member in dataField.FieldType.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance))
                                     {
-                                        Log($"Member: {member.Name}");
+                                        Log($"Member: {member.Name}", true);
 
                                         var baseVal = member.GetValue(dataField.GetValue(basisResult.Result));
                                         var overVal = member.GetValue(dataGot);
 
-                                        Log($"Values: {baseVal} < {overVal}");
-                                        Log($"Equal: {baseVal == overVal}");
+                                        Log($"Values: {baseVal} < {overVal}", true);
+                                        Log($"Equal: {baseVal == overVal}", true);
 
                                         if (overVal == null) continue;
                                         if (overVal == baseVal) continue;
@@ -251,10 +251,10 @@ namespace ModdedShipLoader
 
                                         if (member.Name != "m_RootModuleRef") continue;
 
-                                        Log($"Setting member {member.Name} to {overVal} from {baseVal}");
+                                        Log($"Setting member {member.Name} to {overVal} from {baseVal}", true);
                                         member.SetValue(dataField.GetValue(newSO), overVal);
                                     }
-                                    Log($"Member done");
+                                    Log($"Member done", true);
 
                                     return Addressables.ResourceManager.CreateCompletedOperation((UnityEngine.Object)newSO, string.Empty);
                                 });
@@ -266,6 +266,15 @@ namespace ModdedShipLoader
 
                 if (newResultValid)
                     __result = newResult;
+            }
+        }
+
+        [HarmonyPatch(typeof(GameSession), "InitializeServices")]
+        public class GameSession_InitializeServices
+        {
+            public static void Prefix(ref Carbon.Core.Services.ServiceContext ___mSessionServices)
+            {
+                ___mSessionServices.AddService<DebugMenu>(new DebugMenu(), true);
             }
         }
     }

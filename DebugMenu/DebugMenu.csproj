@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework>
-    <AssemblyName>ModdedShipLoader</AssemblyName>
-    <Description>Loader for modded (custom) ships</Description>
+    <AssemblyName>DebugMenu</AssemblyName>
+    <Description>Hardspace Shipbreaker Debug Menu</Description>
     <Version>1.0.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
@@ -13,7 +13,7 @@
     <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />
     <PackageReference Include="BepInEx.Core" Version="5.*" />
     <PackageReference Include="BepInEx.PluginInfoProps" Version="1.*" />
-    <PackageReference Include="UnityEngine.Modules" Version="2020.3.17" IncludeAssets="compile" />
+    <PackageReference Include="UnityEngine.Modules" Version="2020.3.35" IncludeAssets="compile" />
   </ItemGroup>
   
   <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
@@ -21,9 +21,6 @@
   </ItemGroup>
   
   <ItemGroup>
-    <Reference Include="Assembly-CSharp">
-      <HintPath>..\..\..\..\..\Games\Xbox\Hardspace- Shipbreaker\Content\Shipbreaker_Data\Managed\Assembly-CSharp.dll</HintPath>
-    </Reference>
     <Reference Include="BBI.Unity.Game">
       <HintPath>..\..\..\..\..\Games\Xbox\Hardspace- Shipbreaker\Content\Shipbreaker_Data\Managed\BBI.Unity.Game.dll</HintPath>
     </Reference>
@@ -33,32 +30,11 @@
     <Reference Include="Carbon.Core.Unity">
       <HintPath>..\..\..\..\..\Games\Xbox\Hardspace- Shipbreaker\Content\Shipbreaker_Data\Managed\Carbon.Core.Unity.dll</HintPath>
     </Reference>
-    <Reference Include="Carbon.Localization.Core">
-      <HintPath>..\..\..\..\..\Games\Xbox\Hardspace- Shipbreaker\Content\Shipbreaker_Data\Managed\Carbon.Localization.Core.dll</HintPath>
-    </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\..\..\..\..\Games\Xbox\Hardspace- Shipbreaker\Content\Shipbreaker_Data\Managed\Newtonsoft.Json.dll</HintPath>
     </Reference>
-    <Reference Include="Unity.Addressables">
-      <HintPath>..\..\..\..\..\Games\Xbox\Hardspace- Shipbreaker\Content\Shipbreaker_Data\Managed\Unity.Addressables.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.Entities">
-      <HintPath>..\..\..\..\..\Games\Xbox\Hardspace- Shipbreaker\Content\Shipbreaker_Data\Managed\Unity.Entities.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.Mathematics">
-      <HintPath>..\..\..\..\..\Games\Xbox\Hardspace- Shipbreaker\Content\Shipbreaker_Data\Managed\Unity.Mathematics.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.ResourceManager">
-      <HintPath>..\..\..\..\..\Games\Xbox\Hardspace- Shipbreaker\Content\Shipbreaker_Data\Managed\Unity.ResourceManager.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.TextMeshPro">
-      <HintPath>..\..\..\..\..\Games\Xbox\Hardspace- Shipbreaker\Content\Shipbreaker_Data\Managed\Unity.TextMeshPro.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.UI">
-      <HintPath>..\..\..\..\..\Games\Xbox\Hardspace- Shipbreaker\Content\Shipbreaker_Data\Managed\UnityEngine.UI.dll</HintPath>
-    </Reference>
   </ItemGroup>
-  
+	
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <Exec Command="copy /Y &quot;$(TargetDir)$(TargetName).dll&quot; &quot;D:\Games\Xbox\Hardspace- Shipbreaker\Content\BepInEx\plugins\$(ProjectName)&quot;&#xD;&#xA;copy /Y &quot;$(TargetDir)$(TargetName).pdb&quot; &quot;D:\Games\Xbox\Hardspace- Shipbreaker\Content\BepInEx\plugins\$(ProjectName)&quot;&#xD;&#xA;copy /Y &quot;$(ProjectDir)\settings.json&quot; &quot;D:\Games\Xbox\Hardspace- Shipbreaker\Content\BepInEx\plugins\$(ProjectName)&quot;" />
   </Target>
