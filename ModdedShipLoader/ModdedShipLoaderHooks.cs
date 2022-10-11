@@ -110,6 +110,7 @@ namespace ModdedShipLoader
                                 var foundChild = result.transform.Find(child)?.gameObject;
                                 if (foundChild != null)
                                 {
+                                    foundChild.transform.parent = null;
                                     GameObject.Destroy(foundChild);
                                     Log($"Removing {child} from {assetGUID}", true);
                                 }
