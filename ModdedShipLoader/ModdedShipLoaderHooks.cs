@@ -61,16 +61,18 @@ namespace ModdedShipLoader
 
             static AsyncOperationHandle<GameObject> GameObjectReady(AsyncOperationHandle<GameObject> arg)
             {
-                var result = InstantiateChildren(arg.Result);
-
-                ReplaceShaders(result);
-
-                return Addressables.ResourceManager.CreateCompletedOperation(result, string.Empty);
+                return Addressables.ResourceManager.CreateChainOperation<GameObject, GameObject>(InstantiateChildren(arg.Result), result =>
+                {
+                    ReplaceShaders(result.Result);
+                    return result;
+                });
             }
 
-            static GameObject InstantiateChildren(GameObject parent)
+            static AsyncOperationHandle<GameObject> InstantiateChildren(GameObject parent)
             {
                 var addressableType = System.Reflection.Assembly.GetAssembly(typeof(BBI.Unity.Game.SecuringObjectRemovedEvent)).GetType("BBI.Unity.Game.AddressableLoader");
+
+                List<AsyncOperationHandle> handles = new List<AsyncOperationHandle>();
 
                 foreach (var addressableGO in parent.GetComponentsInChildren(addressableType))
                 // if (arg.Result.TryGetComponent(addressableType, out var loader))
@@ -81,7 +83,7 @@ namespace ModdedShipLoader
 
                     Log($"Loading GO ref {assetGUID}", true);
 
-                    Addressables.ResourceManager.CreateChainOperation<GameObject, GameObject>(
+                    handles.Add(Addressables.ResourceManager.CreateChainOperation<GameObject, GameObject>(
                         Addressables.LoadAssetAsync<GameObject>(new AssetReferenceGameObject(assetGUID)), arg =>
                         {
                             GameObject result = arg.Result;
@@ -96,53 +98,60 @@ namespace ModdedShipLoader
                                 result = arg.Result;
                             }
 
-                            result = InstantiateChildren(GameObject.Instantiate(result, addressableGO.transform));
-
-                            ReplaceShaders(result);
-
-                            if (!string.IsNullOrEmpty(childPath))
+                            return Addressables.ResourceManager.CreateChainOperation<GameObject, GameObject>(InstantiateChildren(GameObject.Instantiate(result, addressableGO.transform)), handle =>
                             {
-                                result.transform.localPosition = Vector3.zero;
-                            }
+                                var handleResult = handle.Result;
+                                ReplaceShaders(handleResult);
 
-                            foreach (var child in disabledChildren)
-                            {
-                                var foundChild = result.transform.Find(child)?.gameObject;
-                                if (foundChild != null)
+                                if (!string.IsNullOrEmpty(childPath))
                                 {
-                                    foundChild.transform.parent = null;
-                                    GameObject.Destroy(foundChild);
-                                    Log($"Removing {child} from {assetGUID}", true);
+                                    handleResult.transform.localPosition = Vector3.zero;
                                 }
-                                else
-                                {
-                                    Log($"ERROR: Can't find {child} from {assetGUID}");
-                                }
-                            }
 
-                            return Addressables.ResourceManager.CreateCompletedOperation(result, string.Empty);
+                                foreach (var child in disabledChildren)
+                                {
+                                    var foundChild = handleResult.transform.Find(child)?.gameObject;
+                                    if (foundChild != null)
+                                    {
+                                        foundChild.transform.parent = null;
+                                        GameObject.Destroy(foundChild);
+                                        Log($"Removing {child} from {assetGUID}", true);
+                                    }
+                                    else
+                                    {
+                                        Log($"ERROR: Can't find {child} from {assetGUID}");
+                                    }
+                                }
+
+                                return Addressables.ResourceManager.CreateCompletedOperation(handleResult, null);
+                            });
                         })
-                    ;
+                    );
                 }
 
-                try
-                {
-                    var addressableSOType = System.Reflection.Assembly.GetAssembly(typeof(BBI.Unity.Game.SecuringObjectRemovedEvent)).GetType("BBI.Unity.Game.AddressableSOLoader");
-
-                    foreach (var addressableSO in parent.GetComponentsInChildren(addressableSOType))
-                    // if (arg.Result.TryGetComponent(addressableSOType, out var addressableSO))
+                return Addressables.ResourceManager.CreateChainOperation(
+                    Addressables.ResourceManager.CreateGenericGroupOperation(handles),
+                    handle =>
                     {
-                        LoadScriptableObjectReferences(addressableSO);
+                        try
+                        {
+                            var addressableSOType = System.Reflection.Assembly.GetAssembly(typeof(BBI.Unity.Game.SecuringObjectRemovedEvent)).GetType("BBI.Unity.Game.AddressableSOLoader");
+
+                            foreach (var addressableSO in parent.GetComponentsInChildren(addressableSOType))
+                            {
+                                LoadScriptableObjectReferences(addressableSO);
+                            }
+
+                        }
+                        catch (Exception ex)
+                        {
+                            Log("SO loading exception!");
+                            Log(ex.Message);
+                        }
+
+                        return Addressables.ResourceManager.CreateCompletedOperation(parent, null);
                     }
-
-                }
-                catch (Exception ex)
-                {
-                    Log("SO loading exception!");
-                    Log(ex.Message);
-                }
-
-                return parent;
+                );
             }
 
             [HarmonyPostfix]

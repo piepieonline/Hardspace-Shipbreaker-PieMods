@@ -48,7 +48,11 @@ namespace ModdedShipLoader
                         )
                     );
 
-                    overrideKeys.AddRange(File.ReadAllLines(Path.Combine(dir, "baseOverrides.txt")));
+                    var baseOverridesPath = Path.Combine(dir, "baseOverrides.txt");
+                    if(File.Exists(baseOverridesPath))
+                    {
+                        overrideKeys.AddRange(File.ReadAllLines(baseOverridesPath));
+                    }
                     
                     Addressables.LoadContentCatalogAsync(tempCatalogPath).Completed += _ =>
                     {
