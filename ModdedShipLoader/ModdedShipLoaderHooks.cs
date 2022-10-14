@@ -1,6 +1,7 @@
 ﻿using BBI.Unity.Game;
 using HarmonyLib;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -249,6 +250,7 @@ namespace ModdedShipLoader
 
                                         if (overVal == null) continue;
                                         if (overVal == baseVal) continue;
+                                        if (typeof(IList).IsAssignableFrom(member.FieldType) && ((IList)overVal).Count == 0) continue;
 
                                         var assetGUIDField = overVal.GetType().GetProperty("AssetGUID", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.FlattenHierarchy);
 

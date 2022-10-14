@@ -1,6 +1,7 @@
 ﻿using BBI.Unity.Game;
 using BepInEx;
 using HarmonyLib;
+using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -12,6 +13,8 @@ namespace ModdedShipLoader
     [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
     public class ModdedShipLoader : BaseUnityPlugin
     {
+        public const int MANIFEST_VERSION = 1;
+
         public static BepInEx.Logging.ManualLogSource LoggerInstance;
 
         private void Awake()
@@ -30,13 +33,26 @@ namespace ModdedShipLoader
                 foreach (var dir in System.IO.Directory.EnumerateDirectories((System.IO.Path.Combine(System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "Ships"))))
                 {
                     var folderName = new System.IO.DirectoryInfo(dir).Name;
-                    Logger.LogInfo($"Loading {folderName.Split('.')[0]} by {folderName.Split('.')[1]}");
+                    var shipName = folderName.Split('.')[0];
+                    Logger.LogInfo($"Loading {shipName} by {folderName.Split('.')[1]}");
 
-                    var catalogPath = System.IO.Path.Combine(dir, "catalog.json");
+                    var catalogPath = Path.Combine(dir, "catalog.json");
                     var tempCatalogPath = catalogPath + ".temp";
 
+                    var manifest = JsonConvert.DeserializeObject<Manifest>(File.ReadAllText(Path.Combine(dir, "manifest.json")));
+
+                    if (manifest.version > MANIFEST_VERSION)
+                    {
+                        Logger.LogWarning($"ERROR: {shipName} is on a newer manifest ({manifest.version} > {MANIFEST_VERSION}) version. Skipping");
+                        continue;
+                    }
+                    else if (manifest.version < MANIFEST_VERSION)
+                    {
+                        Logger.LogInfo($"WARN: {shipName} is on an older manifest ({manifest.version} < {MANIFEST_VERSION}) version. It may not work correctly.");
+                    }
+
                     // Create the temp catalog
-                    System.IO.File.WriteAllText(
+                    File.WriteAllText(
                         tempCatalogPath,
                         // Change the path from the author's machine to this machine
                         System.Text.RegularExpressions.Regex.Replace(
@@ -48,11 +64,7 @@ namespace ModdedShipLoader
                         )
                     );
 
-                    var baseOverridesPath = Path.Combine(dir, "baseOverrides.txt");
-                    if(File.Exists(baseOverridesPath))
-                    {
-                        overrideKeys.AddRange(File.ReadAllLines(baseOverridesPath));
-                    }
+                    overrideKeys.AddRange(manifest.baseOverrides);
                     
                     Addressables.LoadContentCatalogAsync(tempCatalogPath).Completed += _ =>
                     {
@@ -125,5 +137,11 @@ namespace ModdedShipLoader
                 }
             }
         }
+    }
+
+    public class Manifest
+    {
+        public int version;
+        public string[] baseOverrides;
     }
 }
