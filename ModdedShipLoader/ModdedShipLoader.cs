@@ -39,6 +39,12 @@ namespace ModdedShipLoader
                     var catalogPath = Path.Combine(dir, "catalog.json");
                     var tempCatalogPath = catalogPath + ".temp";
 
+                    if(!File.Exists(Path.Combine(dir, "manifest.json")))
+                    {
+                        Logger.LogWarning($"ERROR: {shipName} is missing a manifest. Skipping");
+                        continue;
+                    }
+
                     var manifest = JsonConvert.DeserializeObject<Manifest>(File.ReadAllText(Path.Combine(dir, "manifest.json")));
 
                     if (manifest.version > MANIFEST_VERSION)
