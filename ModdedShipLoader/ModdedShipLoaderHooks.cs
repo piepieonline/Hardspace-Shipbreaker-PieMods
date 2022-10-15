@@ -134,13 +134,15 @@ namespace ModdedShipLoader
                     Addressables.ResourceManager.CreateGenericGroupOperation(handles),
                     handle =>
                     {
+                        List<AsyncOperationHandle> soHandles = new List<AsyncOperationHandle>();
+
                         try
                         {
                             var addressableSOType = System.Reflection.Assembly.GetAssembly(typeof(BBI.Unity.Game.SecuringObjectRemovedEvent)).GetType("BBI.Unity.Game.AddressableSOLoader");
 
                             foreach (var addressableSO in parent.GetComponentsInChildren(addressableSOType))
                             {
-                                LoadScriptableObjectReferences(addressableSO);
+                                soHandles.Add(LoadScriptableObjectReferences(addressableSO));
                             }
 
                         }
@@ -150,7 +152,18 @@ namespace ModdedShipLoader
                             Log(ex.Message);
                         }
 
-                        return Addressables.ResourceManager.CreateCompletedOperation(parent, null);
+                        if(soHandles.Count > 0)
+                        {
+                            return Addressables.ResourceManager.CreateChainOperation(
+                                Addressables.ResourceManager.CreateGenericGroupOperation(handles), handle =>
+                                    {
+                                        return Addressables.ResourceManager.CreateCompletedOperation(parent, null);
+                                    });
+                        }
+                        else
+                        {
+                            return Addressables.ResourceManager.CreateCompletedOperation(parent, null);
+                        }
                     }
                 );
             }
@@ -161,28 +174,50 @@ namespace ModdedShipLoader
                 __result = Addressables.ResourceManager.CreateChainOperation<GameObject, GameObject>(__result, GameObjectReady);
             }
 
-            public static void LoadScriptableObjectReferences(Component addressableSO)
+            public static AsyncOperationHandle LoadScriptableObjectReferences(Component addressableSO)
             {
                 var addressableSOType = System.Reflection.Assembly.GetAssembly(typeof(BBI.Unity.Game.SecuringObjectRemovedEvent)).GetType("BBI.Unity.Game.AddressableSOLoader");
 
+                List<string> onChildren = (List<string>)addressableSOType.GetField("onChild").GetValue(addressableSO);
                 List<string> comps = (List<string>)addressableSOType.GetField("comp").GetValue(addressableSO);
                 List<string> fields = (List<string>)addressableSOType.GetField("field").GetValue(addressableSO);
                 List<string> refs = (List<string>)addressableSOType.GetField("refs").GetValue(addressableSO);
+
+                List<AsyncOperationHandle> soHandles = new List<AsyncOperationHandle>();
 
                 for (int i = 0; i < refs.Count; i++)
                 {
                     Log($"Loading SO ref {refs[i]}", true);
 
-                    var comp = addressableSO.GetComponents<Component>().Where(comp => comp.GetType().ToString() == comps[i]).First();
+                    var parent = (onChildren.Count > 0 && onChildren[i] != "") ? addressableSO.transform.Find(onChildren[i]) : addressableSO.transform;
+
+                    var comp = parent.GetComponents<Component>().Where(comp => comp.GetType().ToString() == comps[i]).First();
                     System.Reflection.FieldInfo fi = comp.GetType().GetField(fields[i], System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 
-                    Addressables.LoadAssetAsync<ScriptableObject>(new AssetReferenceScriptableObject(refs[i])).Completed += res =>
-                    {
-                        if (res.IsValid())
+                    soHandles.Add(
+                        Addressables.ResourceManager.CreateChainOperation<ScriptableObject, ScriptableObject>(
+                            Addressables.LoadAssetAsync<ScriptableObject>(new AssetReferenceScriptableObject(refs[i])),
+                            res => 
+                            {
+                                if (res.IsValid())
+                                {
+                                    fi.SetValue(comp, res.Result);
+                                }
+                                return Addressables.ResourceManager.CreateCompletedOperation(res.Result, null);
+                            }));
+                }
+
+                if (soHandles.Count > 0)
+                {
+                    return Addressables.ResourceManager.CreateChainOperation(
+                        Addressables.ResourceManager.CreateGenericGroupOperation(soHandles), handle =>
                         {
-                            fi.SetValue(comp, res.Result);
-                        }
-                    };
+                            return Addressables.ResourceManager.CreateCompletedOperation(addressableSO.gameObject, null);
+                        });
+                }
+                else
+                {
+                    return Addressables.ResourceManager.CreateCompletedOperation(addressableSO.gameObject, null);
                 }
             }
         }
@@ -208,6 +243,7 @@ namespace ModdedShipLoader
                     {
                         GameObject result = (GameObject)overrideResult.Result;
 
+                        var addressableType = System.Reflection.Assembly.GetAssembly(typeof(BBI.Unity.Game.SecuringObjectRemovedEvent)).GetType("BBI.Unity.Game.AddressableLoader");
                         var addressableSOType = System.Reflection.Assembly.GetAssembly(typeof(BBI.Unity.Game.SecuringObjectRemovedEvent)).GetType("BBI.Unity.Game.AddressableSOLoader");
 
                         // Console.WriteLine("Loading references");
@@ -215,7 +251,8 @@ namespace ModdedShipLoader
                         foreach (var addressableSO in result.GetComponentsInChildren(addressableSOType))
                         // if (arg.Result.TryGetComponent(addressableSOType, out var addressableSO))
                         {
-                            Addressables_InstantiateAsync.LoadScriptableObjectReferences((MonoBehaviour)addressableSO);
+                            if (addressableSO.GetComponent(addressableType) == null)
+                                Addressables_InstantiateAsync.LoadScriptableObjectReferences((MonoBehaviour)addressableSO);
                         }
                     }
 

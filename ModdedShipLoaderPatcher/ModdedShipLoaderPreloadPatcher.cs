@@ -46,6 +46,7 @@ public static class ModdedShipLoaderPreloadPatcher
 
         var newSOType = new TypeDefinition("BBI.Unity.Game", "AddressableSOLoader", TypeAttributes.Class | TypeAttributes.Public, entityData.BaseType);
 
+        newSOType.Fields.Add(new FieldDefinition("onChild", FieldAttributes.Public, module.ImportReference(typeof(List<>)).MakeGenericInstanceType(module.TypeSystem.String)));
         newSOType.Fields.Add(new FieldDefinition("comp", FieldAttributes.Public, module.ImportReference(typeof(List<>)).MakeGenericInstanceType(module.TypeSystem.String)));
         newSOType.Fields.Add(new FieldDefinition("field", FieldAttributes.Public, module.ImportReference(typeof(List<>)).MakeGenericInstanceType(module.TypeSystem.String)));
         newSOType.Fields.Add(new FieldDefinition("refs", FieldAttributes.Public, module.ImportReference(typeof(List<>)).MakeGenericInstanceType(module.TypeSystem.String)));
