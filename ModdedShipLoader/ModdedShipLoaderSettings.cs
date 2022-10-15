@@ -12,6 +12,7 @@ namespace ModdedShipLoader
         public bool enabled;
         public bool debugLog;
         public bool debugLogDetailed;
+        public bool enableDeveloperShips;
 
         public static Settings settings;
 

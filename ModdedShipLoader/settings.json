@@ -1,5 +1,6 @@
 {
 	"enabled": true,
 	"debugLog": true,
-	"debugLogDetailed": false
+	"debugLogDetailed": true,
+	"enableDeveloperShips": true
 }

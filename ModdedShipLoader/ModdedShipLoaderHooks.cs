@@ -281,6 +281,26 @@ namespace ModdedShipLoader
             }
         }
 
+        // Helpers
+
+        // Hide test ships
+        [HarmonyPatch(typeof(LevelSelectController), "LevelAssetLoadComplete")]
+        public class LevelSelectController_LevelAssetLoadComplete
+        {
+            public static void Prefix(ref AsyncOperationHandle<IList<LevelAsset>> levelHandle)
+            {
+                if (Settings.settings.enableDeveloperShips)
+                    return;
+
+                for(int i = levelHandle.Result.Count - 1; i >= 0; i--)
+                {
+                    if(levelHandle.Result[i].Data.IsDeveloperLevel)
+                        levelHandle.Result.RemoveAt(i);
+                }
+            }
+        }
+
+        // Debug Menu
         [HarmonyPatch(typeof(GameSession), "InitializeServices")]
         public class GameSession_InitializeServices
         {
