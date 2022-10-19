@@ -1,4 +1,6 @@
 {
 	"enabled": true,
-	"debugLog": true
+	"debugLog": false,
+	"modifyDebt": true,
+	"returnWeaver": false
 }

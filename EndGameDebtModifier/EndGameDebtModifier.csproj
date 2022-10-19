@@ -24,6 +24,9 @@
     <Reference Include="BBI.Unity.Game">
       <HintPath>..\..\..\..\..\Games\Xbox\Hardspace- Shipbreaker\Content\Shipbreaker_Data\Managed\BBI.Unity.Game.dll</HintPath>
     </Reference>
+    <Reference Include="Carbon.Audio">
+      <HintPath>..\..\..\..\..\Games\Xbox\Hardspace- Shipbreaker\Content\Shipbreaker_Data\Managed\Carbon.Audio.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\..\..\..\..\Games\Xbox\Hardspace- Shipbreaker\Content\Shipbreaker_Data\Managed\Newtonsoft.Json.dll</HintPath>
     </Reference>
