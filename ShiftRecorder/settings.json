@@ -1,0 +1,71 @@
+{
+  "enabled": true,
+  "autoRecordShifts": true,
+  "debugLog": true,
+  "savePath": ".\\BepInEx\\plugins\\ShiftRecorder\\Videos\\",
+  "saveFileName": "{SessionType}-{ShipName}-{ShipDifficulty}-{ShipArchetype}-{ShipRole}-{Time}-{Hash}",
+  "recordingWidth": 1280,
+  "recordingHeight": 720,
+  "recordingTargetFPS": 30,
+  "recordingBitrate": 2500,
+  "recordingAntiAliasing": 1,
+  "showInGamePreview": true,
+  "previewHeight": 200,
+  "previewVerticalPosition": 1,
+  "previewHorizontalPosition": 1,
+  "selectedCameraPosition": "BackBay",
+  "cameraPositions": [
+    {
+      "name": "MasterJack",
+      "position": {
+        "x": -6.3001,
+        "y": 14.4832,
+        "z": 97.9479
+      },
+      "rotation": {
+        "x": 13.8578,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "name": "BackBay",
+      "position": {
+        "x": -6.3001,
+        "y": 21.5,
+        "z": -16.2832
+      },
+      "rotation": {
+        "x": 17.5,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "name": "LeftJack",
+      "position": {
+        "x": 12.7864,
+        "y": 21.7884,
+        "z": 42.1802
+      },
+      "rotation": {
+        "x": 30,
+        "y": 219.6062,
+        "z": 0
+      }
+    },
+    {
+      "name": "RightJack",
+      "position": {
+        "x": -20.4643,
+        "y": 21.1488,
+        "z": 42.4983
+      },
+      "rotation": {
+        "x": 30,
+        "y": 147.261,
+        "z": 0
+      }
+    }
+  ]
+}
