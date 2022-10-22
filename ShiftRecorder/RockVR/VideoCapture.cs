@@ -153,7 +153,7 @@ namespace RockVR.Video
         /// <summary>
         /// The frame encode thread.
         /// </summary>
-        private static Thread encodeThread;
+        private Thread encodeThread;
         /// <summary>
         /// Cleanup this instance.
         /// </summary>
@@ -614,8 +614,8 @@ namespace RockVR.Video
             frameTexture.ReadPixels(new Rect(0, 0, frameWidth, frameHeight), 0, 0, false);
             frameTexture.Apply();
 
-            if (ShiftRecorder.ShiftRecorder.rawImage != null)
-                ShiftRecorder.ShiftRecorder.rawImage.texture = frameTexture;
+            if (ShiftRecorder.ShiftRecorder.VideoCaptureSession.rawImage != null)
+                ShiftRecorder.ShiftRecorder.VideoCaptureSession.rawImage.texture = frameTexture;
 
             // Restore RenderTexture states.
             RenderTexture.active = null;

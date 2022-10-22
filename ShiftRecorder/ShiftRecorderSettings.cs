@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using BBI.Unity.Game;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -42,15 +43,25 @@ namespace ShiftRecorder
             RockVR.Video.PathConfig.ffmpegPath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "ffmpeg.exe");
 
             MoveCamera();
+            MovePreview();
         }
 
         public static void MoveCamera()
         {
-            if (ShiftRecorder.captureCamera != null)
+            if (GameSession.SessionCount > 0 && ShiftRecorder.VideoCaptureSession.captureCamera != null)
             {
                 var pos = settings.cameraPositions.FirstOrDefault(pos => pos.name == settings.selectedCameraPosition) ?? settings.cameraPositions.First();
-                ShiftRecorder.captureCamera.transform.position = pos.position;
-                ShiftRecorder.captureCamera.transform.rotation = Quaternion.Euler(pos.rotation.x, pos.rotation.y, pos.rotation.z);
+                ShiftRecorder.VideoCaptureSession.captureCamera.transform.position = pos.position;
+                ShiftRecorder.VideoCaptureSession.captureCamera.transform.rotation = Quaternion.Euler(pos.rotation.x, pos.rotation.y, pos.rotation.z);
+            }
+        }
+
+        public static void MovePreview()
+        {
+            var transform = ShiftRecorder.VideoCaptureSession.imgObject?.GetComponent<RectTransform>();
+            if (transform != null)
+            {
+                transform.anchoredPosition = new Vector2(780 * Settings.settings.previewHorizontalPosition, 498 * Settings.settings.previewVerticalPosition * -1); // setting position, will be on center
             }
         }
 

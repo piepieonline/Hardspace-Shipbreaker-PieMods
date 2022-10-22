@@ -25,34 +25,34 @@ namespace ShiftRecorder
 
 		public override void DrawGUI()
 		{
-			if (ShiftRecorder.videoCaptureCtrl.status == VideoCaptureCtrlBase.StatusType.NOT_START || ShiftRecorder.videoCaptureCtrl.status == VideoCaptureCtrlBase.StatusType.FINISH)
+			if (ShiftRecorder.sessions[GameSession.SessionCount - 1].videoCaptureCtrl.status == VideoCaptureCtrlBase.StatusType.NOT_START || ShiftRecorder.sessions[GameSession.SessionCount - 1].videoCaptureCtrl.status == VideoCaptureCtrlBase.StatusType.FINISH)
 			{
 				if (DebugServiceUtils.DebugButton("Record", Array.Empty<GUILayoutOption>()))
 				{
-					ShiftRecorder.videoCaptureCtrl.StartCapture();
+					ShiftRecorder.sessions[GameSession.SessionCount - 1].videoCaptureCtrl.StartCapture();
 				}
 			}
 
-			if (ShiftRecorder.videoCaptureCtrl.status == VideoCaptureCtrlBase.StatusType.PAUSED || ShiftRecorder.videoCaptureCtrl.status == VideoCaptureCtrlBase.StatusType.STARTED)
+			if (ShiftRecorder.sessions[GameSession.SessionCount - 1].videoCaptureCtrl.status == VideoCaptureCtrlBase.StatusType.PAUSED || ShiftRecorder.sessions[GameSession.SessionCount - 1].videoCaptureCtrl.status == VideoCaptureCtrlBase.StatusType.STARTED)
 			{
 				if (DebugServiceUtils.DebugButton("Stop Recording", Array.Empty<GUILayoutOption>()))
 				{
-					ShiftRecorder.videoCaptureCtrl.StopCapture();
+					ShiftRecorder.sessions[GameSession.SessionCount - 1].videoCaptureCtrl.StopCapture();
 				}
 
-				if (ShiftRecorder.videoCaptureCtrl != null)
+				if (ShiftRecorder.sessions[GameSession.SessionCount - 1].videoCaptureCtrl != null)
 				{
-					if (DebugServiceUtils.DebugButton($"{(ShiftRecorder.videoCaptureCtrl.status == VideoCaptureCtrlBase.StatusType.PAUSED ? "Resume" : "Pause")} Recording", Array.Empty<GUILayoutOption>()))
-						ShiftRecorder.videoCaptureCtrl.ToggleCapture();
+					if (DebugServiceUtils.DebugButton($"{(ShiftRecorder.sessions[GameSession.SessionCount - 1].videoCaptureCtrl.status == VideoCaptureCtrlBase.StatusType.PAUSED ? "Resume" : "Pause")} Recording", Array.Empty<GUILayoutOption>()))
+						ShiftRecorder.sessions[GameSession.SessionCount - 1].videoCaptureCtrl.ToggleCapture();
 				}
 			}
 
-			if (ShiftRecorder.captureCamera != null)
+			if (ShiftRecorder.VideoCaptureSession.captureCamera != null)
 			{
 				if (DebugServiceUtils.DebugButton("Move Camera to Current Position", Array.Empty<GUILayoutOption>()))
 				{
-					ShiftRecorder.captureCamera.transform.position = LynxCameraController.MainCamera.transform.position;
-					ShiftRecorder.captureCamera.transform.rotation = LynxCameraController.MainCamera.transform.rotation;
+					ShiftRecorder.VideoCaptureSession.captureCamera.transform.position = LynxCameraController.MainCamera.transform.position;
+					ShiftRecorder.VideoCaptureSession.captureCamera.transform.rotation = LynxCameraController.MainCamera.transform.rotation;
 				}
 			}
 
@@ -60,6 +60,8 @@ namespace ShiftRecorder
 			{
 				Settings.Load();
 			}
+
+			// TODO: Allow choosing of recording locations from settings
 		}
 
 		#region Required Inheritance Stuff
