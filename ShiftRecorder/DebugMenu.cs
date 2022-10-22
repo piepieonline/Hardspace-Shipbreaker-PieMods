@@ -23,6 +23,8 @@ namespace ShiftRecorder
 			}
 		}
 
+		public static int cameraIndex = 0;
+
 		public override void DrawGUI()
 		{
 			if (ShiftRecorder.sessions[GameSession.SessionCount - 1].videoCaptureCtrl.status == VideoCaptureCtrlBase.StatusType.NOT_START || ShiftRecorder.sessions[GameSession.SessionCount - 1].videoCaptureCtrl.status == VideoCaptureCtrlBase.StatusType.FINISH)
@@ -47,21 +49,39 @@ namespace ShiftRecorder
 				}
 			}
 
-			if (ShiftRecorder.VideoCaptureSession.captureCamera != null)
-			{
-				if (DebugServiceUtils.DebugButton("Move Camera to Current Position", Array.Empty<GUILayoutOption>()))
-				{
-					ShiftRecorder.VideoCaptureSession.captureCamera.transform.position = LynxCameraController.MainCamera.transform.position;
-					ShiftRecorder.VideoCaptureSession.captureCamera.transform.rotation = LynxCameraController.MainCamera.transform.rotation;
-				}
-			}
-
 			if (DebugServiceUtils.DebugButton("Reload Settings", Array.Empty<GUILayoutOption>()))
 			{
 				Settings.Load();
 			}
 
-			// TODO: Allow choosing of recording locations from settings
+			if (ShiftRecorder.VideoCaptureSession.captureCamera != null)
+			{
+				foreach(var location in Settings.settings.cameraPositions)
+                {
+					if (DebugServiceUtils.DebugButton($"Move Camera to {location.name}", Array.Empty<GUILayoutOption>()))
+					{
+						Settings.MoveCamera(location.name);
+						cameraIndex = Settings.settings.cameraPositions.IndexOf(location);
+					}
+				}
+
+				if (DebugServiceUtils.DebugButton("Move Camera to Current Position", Array.Empty<GUILayoutOption>()))
+				{
+					ShiftRecorder.VideoCaptureSession.captureCamera.transform.position = LynxCameraController.MainCamera.transform.position;
+					ShiftRecorder.VideoCaptureSession.captureCamera.transform.rotation = LynxCameraController.MainCamera.transform.rotation;
+				}
+
+				if(ShiftRecorder.VideoCaptureSession.captureCamera != null)
+                {
+					GUILayout.Label("Current Camera Location", Array.Empty<GUILayoutOption>());
+					var pos = ShiftRecorder.VideoCaptureSession.captureCamera.transform.position;
+					var rot = ShiftRecorder.VideoCaptureSession.captureCamera.transform.rotation.eulerAngles;
+					GUILayout.Label("Position:", Array.Empty<GUILayoutOption>());
+					GUILayout.Label($"x: {pos.x}, y: {pos.y} z: {pos.z}", Array.Empty<GUILayoutOption>());
+					GUILayout.Label("Rotation:", Array.Empty<GUILayoutOption>());
+					GUILayout.Label($"x: {rot.x}, y: {rot.y} z: {rot.z}", Array.Empty<GUILayoutOption>());
+				}
+			}
 		}
 
 		#region Required Inheritance Stuff

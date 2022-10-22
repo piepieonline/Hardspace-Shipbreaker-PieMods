@@ -4,6 +4,7 @@
   "debugLog": true,
   "savePath": ".\\BepInEx\\plugins\\ShiftRecorder\\Videos\\",
   "saveFileName": "{SessionType}-{ShipName}-{ShipDifficulty}-{ShipArchetype}-{ShipRole}-{Time}-{Hash}",
+  "hideHUDInRecording": true,
   "recordingWidth": 1280,
   "recordingHeight": 720,
   "recordingTargetFPS": 30,
@@ -13,7 +14,18 @@
   "previewHeight": 200,
   "previewVerticalPosition": 1,
   "previewHorizontalPosition": 1,
-  "selectedCameraPosition": "BackBay",
+  "keybindNextCamera": "[+]",
+  "keybindPreviousCamera": "[-]",
+  "keybindCamera1": "[1]",
+  "keybindCamera2": "[2]",
+  "keybindCamera3": "[3]",
+  "keybindCamera4": "[4]",
+  "keybindCamera5": "[5]",
+  "keybindCamera6": "[6]",
+  "keybindCamera7": "[7]",
+  "keybindCamera8": "[8]",
+  "keybindCamera9": "[9]",
+  "selectedCameraPosition": "BayHigh",
   "cameraPositions": [
     {
       "name": "MasterJack",
@@ -38,6 +50,19 @@
       "rotation": {
         "x": 17.5,
         "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "name": "BayHigh",
+      "position": {
+        "x": -6.3001,
+        "y": 30.4832,
+        "z": 97.9479
+      },
+      "rotation": {
+        "x": 33.8578,
+        "y": 180,
         "z": 0
       }
     },

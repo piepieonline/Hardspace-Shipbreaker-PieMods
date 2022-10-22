@@ -72,7 +72,7 @@ namespace ShiftRecorder
             if(VideoCaptureSession.captureCamera == null)
             {
                 VideoCaptureSession.captureCamera = new GameObject("RecordingCamera");
-                Settings.MoveCamera();
+                Settings.MoveCamera(Settings.settings.selectedCameraPosition);
                 var cam = VideoCaptureSession.captureCamera.AddComponent<Camera>();
                 cam.cullingMask = ~LayerMask.GetMask("UI", "HUD_2D", "HUD_3D");
 
@@ -114,27 +114,63 @@ namespace ShiftRecorder
                 }
             }
 
-            // TODO: Hide the HUD
+            // Hide the HUD from the recorder camera
+            // Don't ask me how or why this works... It just does
 
-            yield return new WaitForSeconds(2f);
-            var UICamera = GameObject.Find("UI Camera").GetComponent<Camera>();
-            UICamera.enabled = true;
-            var hudCanvas = GameObject.Find("HUD Canvas - Other").GetComponent<Canvas>();
-            hudCanvas.worldCamera = UICamera;
-            // hudCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            var helmCanvas = GameObject.Find("HUD Canvas - Helmet").GetComponent<Canvas>();
-            helmCanvas.worldCamera = UICamera;
-            // helmCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            if(Settings.settings.hideHUDInRecording)
+            {
+                yield return new WaitForSeconds(2f);
+                var UICamera = GameObject.Find("UI Camera").GetComponent<Camera>();
+                UICamera.enabled = true;
+                var hudCanvas = GameObject.Find("HUD Canvas - Other").GetComponent<Canvas>();
+                hudCanvas.worldCamera = UICamera;
+                // hudCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+                var helmCanvas = GameObject.Find("HUD Canvas - Helmet").GetComponent<Canvas>();
+                helmCanvas.worldCamera = UICamera;
+                // helmCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
 
-            yield return new WaitForUpdate();
-            helmCanvas.renderMode = RenderMode.ScreenSpaceCamera;
-            hudCanvas.renderMode = RenderMode.ScreenSpaceCamera;
-            
-            yield return new WaitForUpdate();
-            helmCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            hudCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+                yield return new WaitForUpdate();
+                helmCanvas.renderMode = RenderMode.ScreenSpaceCamera;
+                hudCanvas.renderMode = RenderMode.ScreenSpaceCamera;
 
-            UICamera.enabled = false;
+                yield return new WaitForUpdate();
+                helmCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+                hudCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+
+                UICamera.enabled = false;
+            }
+        }
+
+        private void Update()
+        {
+            bool shouldMove = false;
+
+            if(Input.GetKeyUp(Settings.settings.keybindNextCamera))
+            {
+                DebugMenu.cameraIndex++;
+                shouldMove = true;
+            }
+            if (Input.GetKeyUp(Settings.settings.keybindPreviousCamera))
+            {
+                DebugMenu.cameraIndex = DebugMenu.cameraIndex == 0 ? Settings.settings.cameraPositions.Count - 1 : DebugMenu.cameraIndex - 1;
+                shouldMove = true;
+            }
+
+            if (Input.GetKeyUp(Settings.settings.keybindCamera1)) { DebugMenu.cameraIndex = 0; shouldMove = true; }
+            if (Input.GetKeyUp(Settings.settings.keybindCamera2)) { DebugMenu.cameraIndex = 1; shouldMove = true; }
+            if (Input.GetKeyUp(Settings.settings.keybindCamera3)) { DebugMenu.cameraIndex = 2; shouldMove = true; }
+            if (Input.GetKeyUp(Settings.settings.keybindCamera4)) { DebugMenu.cameraIndex = 3; shouldMove = true; }
+            if (Input.GetKeyUp(Settings.settings.keybindCamera5)) { DebugMenu.cameraIndex = 4; shouldMove = true; }
+            if (Input.GetKeyUp(Settings.settings.keybindCamera6)) { DebugMenu.cameraIndex = 5; shouldMove = true; }
+            if (Input.GetKeyUp(Settings.settings.keybindCamera7)) { DebugMenu.cameraIndex = 6; shouldMove = true; }
+            if (Input.GetKeyUp(Settings.settings.keybindCamera8)) { DebugMenu.cameraIndex = 7; shouldMove = true; }
+            if (Input.GetKeyUp(Settings.settings.keybindCamera9)) { DebugMenu.cameraIndex = 8; shouldMove = true; }
+
+            if (shouldMove)
+            {
+                DebugMenu.cameraIndex = DebugMenu.cameraIndex % Settings.settings.cameraPositions.Count;
+                Settings.MoveCamera(Settings.settings.cameraPositions[DebugMenu.cameraIndex].name);
+            }
         }
 
         public class VideoCaptureSession

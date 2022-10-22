@@ -18,6 +18,8 @@ namespace ShiftRecorder
         public string savePath;
         public string saveFileName;
 
+        public bool hideHUDInRecording;
+
         public int recordingWidth;
         public int recordingHeight;
         public int recordingTargetFPS;
@@ -28,6 +30,18 @@ namespace ShiftRecorder
         public int previewHeight;
         public int previewVerticalPosition;
         public int previewHorizontalPosition;
+
+        public string keybindNextCamera;
+        public string keybindPreviousCamera;
+        public string keybindCamera1;
+        public string keybindCamera2;
+        public string keybindCamera3;
+        public string keybindCamera4;
+        public string keybindCamera5;
+        public string keybindCamera6;
+        public string keybindCamera7;
+        public string keybindCamera8;
+        public string keybindCamera9;
 
         public string selectedCameraPosition;
 
@@ -42,15 +56,15 @@ namespace ShiftRecorder
             RockVR.Video.PathConfig.saveFolder = System.IO.Path.GetFullPath(settings.savePath);
             RockVR.Video.PathConfig.ffmpegPath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "ffmpeg.exe");
 
-            MoveCamera();
+            MoveCamera(settings.selectedCameraPosition);
             MovePreview();
         }
 
-        public static void MoveCamera()
+        public static void MoveCamera(string newPositionName = null)
         {
             if (GameSession.SessionCount > 0 && ShiftRecorder.VideoCaptureSession.captureCamera != null)
             {
-                var pos = settings.cameraPositions.FirstOrDefault(pos => pos.name == settings.selectedCameraPosition) ?? settings.cameraPositions.First();
+                var pos = settings.cameraPositions.FirstOrDefault(pos => pos.name == newPositionName) ?? settings.cameraPositions.First();
                 ShiftRecorder.VideoCaptureSession.captureCamera.transform.position = pos.position;
                 ShiftRecorder.VideoCaptureSession.captureCamera.transform.rotation = Quaternion.Euler(pos.rotation.x, pos.rotation.y, pos.rotation.z);
             }
