@@ -27,29 +27,31 @@ namespace ShiftRecorder
 
 		public override void DrawGUI()
 		{
-			if (ShiftRecorder.sessions[GameSession.SessionCount - 1].videoCaptureCtrl.status == VideoCaptureCtrlBase.StatusType.NOT_START || ShiftRecorder.sessions[GameSession.SessionCount - 1].videoCaptureCtrl.status == VideoCaptureCtrlBase.StatusType.FINISH)
+			if (ShiftRecorder.VideoCaptureSession.VideoCaptureCtrl() == null || ShiftRecorder.VideoCaptureSession.VideoCaptureCtrl()?.status == VideoCaptureCtrlBase.StatusType.NOT_START || ShiftRecorder.VideoCaptureSession.VideoCaptureCtrl()?.status == VideoCaptureCtrlBase.StatusType.FINISH)
 			{
 				if (DebugServiceUtils.DebugButton("Record", Array.Empty<GUILayoutOption>()))
 				{
-					ShiftRecorder.sessions[GameSession.SessionCount - 1].videoCaptureCtrl.StartCapture();
+					ShiftRecorder.CreateRecorder();
+					ShiftRecorder.StartChangeHud();
+					ShiftRecorder.VideoCaptureSession.VideoCaptureCtrl()?.StartCapture();
 				}
 			}
 
-			if (ShiftRecorder.sessions[GameSession.SessionCount - 1].videoCaptureCtrl.status == VideoCaptureCtrlBase.StatusType.PAUSED || ShiftRecorder.sessions[GameSession.SessionCount - 1].videoCaptureCtrl.status == VideoCaptureCtrlBase.StatusType.STARTED)
+			if (ShiftRecorder.VideoCaptureSession.VideoCaptureCtrl()?.status == VideoCaptureCtrlBase.StatusType.PAUSED || ShiftRecorder.VideoCaptureSession.VideoCaptureCtrl()?.status == VideoCaptureCtrlBase.StatusType.STARTED)
 			{
-				if (DebugServiceUtils.DebugButton("Stop Recording", Array.Empty<GUILayoutOption>()))
+				if (DebugServiceUtils.DebugButton("End Recording", Array.Empty<GUILayoutOption>()))
 				{
-					ShiftRecorder.sessions[GameSession.SessionCount - 1].videoCaptureCtrl.StopCapture();
+					ShiftRecorder.VideoCaptureSession.VideoCaptureCtrl()?.StopCapture();
 				}
 
-				if (ShiftRecorder.sessions[GameSession.SessionCount - 1].videoCaptureCtrl != null)
+				if (ShiftRecorder.VideoCaptureSession.VideoCaptureCtrl() != null)
 				{
-					if (DebugServiceUtils.DebugButton($"{(ShiftRecorder.sessions[GameSession.SessionCount - 1].videoCaptureCtrl.status == VideoCaptureCtrlBase.StatusType.PAUSED ? "Resume" : "Pause")} Recording", Array.Empty<GUILayoutOption>()))
-						ShiftRecorder.sessions[GameSession.SessionCount - 1].videoCaptureCtrl.ToggleCapture();
+					if (DebugServiceUtils.DebugButton($"{(ShiftRecorder.VideoCaptureSession.VideoCaptureCtrl()?.status == VideoCaptureCtrlBase.StatusType.PAUSED ? "Resume" : "Pause")} Recording", Array.Empty<GUILayoutOption>()))
+						ShiftRecorder.VideoCaptureSession.VideoCaptureCtrl()?.ToggleCapture();
 				}
 			}
 
-			if (DebugServiceUtils.DebugButton("Reload Settings", Array.Empty<GUILayoutOption>()))
+			if (DebugServiceUtils.DebugButton("Reload Positions from Settings", Array.Empty<GUILayoutOption>()))
 			{
 				Settings.Load();
 			}

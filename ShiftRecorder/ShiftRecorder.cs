@@ -3,6 +3,7 @@ using BepInEx;
 using HarmonyLib;
 using RockVR.Video;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -15,6 +16,8 @@ namespace ShiftRecorder
 
         public static List<VideoCaptureSession> sessions = new List<VideoCaptureSession>();
 
+        private static ShiftRecorder instance;
+
         private void Awake()
         {
             // Plugin startup logic
@@ -25,30 +28,39 @@ namespace ShiftRecorder
                 new Harmony($"{PluginInfo.PLUGIN_GUID}").PatchAll();
                 Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_NAME} is patched");
 
+                instance = this;
+
                 Main.EventSystem.AddHandler<GameStateChangedEvent>(new Carbon.Core.Events.EventHandler<GameStateChangedEvent>(evt =>
                 {
+                    if (sessions.Count < GameSession.SessionCount)
+                    {
+                        sessions.Add(null);
+                    }
+
                     if (evt.GameState != evt.PrevGameState)
                     {
                         if (evt.GameState == GameSession.GameState.Gameplay)
                         {
-                            if(sessions.Count < GameSession.SessionCount)
-                            // if (videoCaptureCtrl == null || newScene)
+                            if(sessions.Last() == null)
                             {
-                                CreateRecorder();
                                 if (Settings.settings.autoRecordShifts)
-                                    sessions[GameSession.SessionCount - 1].videoCaptureCtrl.StartCapture();
+                                {
+                                    CreateRecorder();
+
+                                    VideoCaptureSession.VideoCaptureCtrl()?.StartCapture();
+                                }
                             }
-                            else if (sessions[GameSession.SessionCount - 1].videoCaptureCtrl != null && sessions[GameSession.SessionCount - 1].videoCaptureCtrl.status == VideoCaptureCtrlBase.StatusType.PAUSED)
+                            else if (VideoCaptureSession.VideoCaptureCtrl()?.status == VideoCaptureCtrlBase.StatusType.PAUSED)
                             {
-                                sessions[GameSession.SessionCount - 1].videoCaptureCtrl.ToggleCapture();
+                                VideoCaptureSession.VideoCaptureCtrl()?.ToggleCapture();
                             }
                         }
 
-                        if (ShiftRecorder.sessions.Count > 0 && evt.GameState == GameSession.GameState.Paused && sessions[GameSession.SessionCount - 1].videoCaptureCtrl != null)
+                        if (ShiftRecorder.sessions.Count > 0 && evt.GameState == GameSession.GameState.Paused)
                         {
-                            if (sessions[GameSession.SessionCount - 1].videoCaptureCtrl.status == VideoCaptureCtrlBase.StatusType.STARTED)
+                            if (VideoCaptureSession.VideoCaptureCtrl()?.status == VideoCaptureCtrlBase.StatusType.STARTED)
                             {
-                                sessions[GameSession.SessionCount - 1].videoCaptureCtrl.ToggleCapture();
+                                VideoCaptureSession.VideoCaptureCtrl()?.ToggleCapture();
                             }
                         }
                     }
@@ -62,10 +74,9 @@ namespace ShiftRecorder
             }
         }
 
-        private void CreateRecorder()
+        public static void CreateRecorder()
         {
-
-            sessions.Add(new VideoCaptureSession());
+            sessions[GameSession.SessionCount - 1] = new VideoCaptureSession();
 
             VideoCaptureSession.captureCamera = GameObject.Find("RecordingCamera");
 
@@ -85,7 +96,12 @@ namespace ShiftRecorder
             sessions[GameSession.SessionCount - 1].videoCaptureCtrl = camCtrl.AddComponent<VideoCaptureCtrl>();
             sessions[GameSession.SessionCount - 1].videoCaptureCtrl.videoCaptures = new VideoCapture[] { sessions[GameSession.SessionCount - 1].videoCapture };
 
-            StartCoroutine(ChangeHud());
+            StartChangeHud();
+        }
+
+        public static void StartChangeHud()
+        {
+            instance.StartCoroutine(instance.ChangeHud());
         }
 
         System.Collections.IEnumerator ChangeHud()
@@ -181,6 +197,16 @@ namespace ShiftRecorder
             public static GameObject captureCamera;
             public static GameObject imgObject;
             public static UnityEngine.UI.RawImage rawImage;
+
+            public static VideoCapture VideoCapture()
+            {
+                return sessions.Count <= GameSession.SessionCount - 1 ? sessions[GameSession.SessionCount - 1].videoCapture : null;
+            }
+
+            public static VideoCaptureCtrl VideoCaptureCtrl()
+            {
+                return (sessions.Count > 0 && sessions.Count == GameSession.SessionCount) ? sessions[GameSession.SessionCount - 1]?.videoCaptureCtrl : null;
+            }
         }
     }
 }

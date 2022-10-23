@@ -26,12 +26,9 @@ namespace ShiftRecorder
         {
             public static void Prefix()
             {
-                if (ShiftRecorder.sessions.Count > 0 && ShiftRecorder.sessions[GameSession.SessionCount - 1].videoCaptureCtrl != null)
+                if (ShiftRecorder.VideoCaptureSession.VideoCaptureCtrl()?.status == VideoCaptureCtrlBase.StatusType.STARTED || ShiftRecorder.VideoCaptureSession.VideoCaptureCtrl()?.status == VideoCaptureCtrlBase.StatusType.PAUSED)
                 {
-                    if (ShiftRecorder.sessions[GameSession.SessionCount - 1].videoCaptureCtrl.status == VideoCaptureCtrlBase.StatusType.STARTED || ShiftRecorder.sessions[GameSession.SessionCount - 1].videoCaptureCtrl.status == VideoCaptureCtrlBase.StatusType.PAUSED)
-                    {
-                        ShiftRecorder.sessions[GameSession.SessionCount - 1].videoCaptureCtrl.StopCapture();
-                    }
+                    ShiftRecorder.VideoCaptureSession.VideoCaptureCtrl().StopCapture();
                 }
             }
         }
