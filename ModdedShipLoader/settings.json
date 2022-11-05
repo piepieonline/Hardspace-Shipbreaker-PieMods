@@ -1,6 +1,8 @@
 {
 	"enabled": true,
+	"showModShipsInCareer": true,
+	"numberOfExtraShipsInCareerCatalog": 0,
 	"debugLog": true,
-	"debugLogDetailed": true,
-	"enableDeveloperShips": true
+	"debugLogDetailed": false,
+	"enableDeveloperShips": false
 }

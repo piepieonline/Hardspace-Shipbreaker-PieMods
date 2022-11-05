@@ -30,6 +30,12 @@ namespace ModdedShipLoader
                 List<string> overrideKeys = new List<string>();
 
                 Logger.LogInfo($"Loading Custom Ships");
+
+                ModdedShipLoaderHooks.addressableType = System.Reflection.Assembly.GetAssembly(typeof(BBI.Unity.Game.SecuringObjectRemovedEvent)).GetType("BBI.Unity.Game.AddressableLoader");
+                ModdedShipLoaderHooks.addressableComponentLoaderType = System.Reflection.Assembly.GetAssembly(typeof(BBI.Unity.Game.SecuringObjectRemovedEvent)).GetType("BBI.Unity.Game.AddressableComponentLoader");
+                ModdedShipLoaderHooks.addressableComponentValueType = System.Reflection.Assembly.GetAssembly(typeof(BBI.Unity.Game.SecuringObjectRemovedEvent)).GetType("BBI.Unity.Game.AddressableComponentValue");
+                ModdedShipLoaderHooks.addressableSOType = System.Reflection.Assembly.GetAssembly(typeof(BBI.Unity.Game.SecuringObjectRemovedEvent)).GetType("BBI.Unity.Game.AddressableSOLoader");
+
                 foreach (var dir in System.IO.Directory.EnumerateDirectories((System.IO.Path.Combine(System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "Ships"))))
                 {
                     var folderName = new System.IO.DirectoryInfo(dir).Name;
@@ -79,10 +85,20 @@ namespace ModdedShipLoader
                         // Force load modded levels - the game prewarms, so we need to as well
                         Addressables.LoadResourceLocationsAsync(new string[] { "ModdedLevel" }).Completed += list =>
                         {
-                            foreach (var location in list.Result)
+                            Addressables.LoadAssetsAsync<BBI.Unity.Game.ModuleConstructionAsset>("ModdedLevel", null).Completed += res =>
                             {
-                                Addressables.LoadAssetAsync<BBI.Unity.Game.ModuleConstructionAsset>(location);
-                            }
+                                // Also store the construction assets, for career mode mapping
+                                if(Settings.settings.showModShipsInCareer)
+                                {
+                                    foreach(var constructionAsset in res.Result)
+                                    {
+                                        if(constructionAsset.AssetGUIDIsValid() && constructionAsset.Data.CatalogueImageRef.AssetGUID != "" && constructionAsset.Data.ShipArchetype != null)
+                                        {
+                                            ModdedShipLoaderHooks.ShipClassAsset_GeneratableShips.moduleToArchetype[constructionAsset.AssetGUID] = constructionAsset.Data.ShipArchetype;
+                                        }
+                                    }
+                                }
+                            };
                         };
                     };
                 }

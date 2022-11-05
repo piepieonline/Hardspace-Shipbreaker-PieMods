@@ -14,6 +14,11 @@ namespace ModdedShipLoader
 {
     internal class ModdedShipLoaderHooks
     {
+        public static Type addressableType;
+        public static Type addressableComponentLoaderType;
+        public static Type addressableSOType;
+        public static Type addressableComponentValueType;
+
         static void Log(string message, bool detailed = false)
         {
             if ((Settings.settings.debugLog && !detailed) || (Settings.settings.debugLogDetailed && detailed))
@@ -71,8 +76,6 @@ namespace ModdedShipLoader
 
             static AsyncOperationHandle<GameObject> InstantiateChildren(GameObject parent)
             {
-                var addressableType = System.Reflection.Assembly.GetAssembly(typeof(BBI.Unity.Game.SecuringObjectRemovedEvent)).GetType("BBI.Unity.Game.AddressableLoader");
-
                 List<AsyncOperationHandle> handles = new List<AsyncOperationHandle>();
 
                 foreach (var addressableGO in parent.GetComponentsInChildren(addressableType))
@@ -81,6 +84,9 @@ namespace ModdedShipLoader
                     string assetGUID = (string)addressableType.GetField("assetGUID").GetValue(addressableGO);
                     string childPath = (string)addressableType.GetField("childPath").GetValue(addressableGO);
                     List<string> disabledChildren = (List<string>)addressableType.GetField("disabledChildren").GetValue(addressableGO);
+                    List<Component> componentsOnChildren = (List<Component>)addressableType.GetField("componentsOnChildren").GetValue(addressableGO);
+                    List<string> componentsOnChildrenPaths = (List<string>)addressableType.GetField("componentsOnChildrenPaths").GetValue(addressableGO);
+
 
                     Log($"Loading GO ref {assetGUID}", true);
 
@@ -97,6 +103,19 @@ namespace ModdedShipLoader
                             {
                                 Log($"ERROR: Can't find {childPath} in {assetGUID}");
                                 result = arg.Result;
+                            }
+
+                            if(!result.TryGetComponent<ModuleDefinition>(out _))
+                            {
+                                result.AddComponent<ModuleDefinition>();
+                            }
+
+                            for (int i = 0; i < componentsOnChildren.Count; i++)
+                            {
+                                Log($"Trying to clone {componentsOnChildren[i]}");
+                                var componentParent = (componentsOnChildrenPaths.Count - 1 < i || componentsOnChildrenPaths[i] == "") ? result : result.transform.Find(childPath).gameObject;
+                                CloneComponent(componentParent.AddComponent(componentsOnChildren[i].GetType()), componentsOnChildren[i]);
+                                Log($"Cloned {componentsOnChildren[i].GetType().ToString()}");
                             }
 
                             return Addressables.ResourceManager.CreateChainOperation<GameObject, GameObject>(InstantiateChildren(GameObject.Instantiate(result, addressableGO.transform)), handle =>
@@ -138,13 +157,15 @@ namespace ModdedShipLoader
 
                         try
                         {
-                            var addressableSOType = System.Reflection.Assembly.GetAssembly(typeof(BBI.Unity.Game.SecuringObjectRemovedEvent)).GetType("BBI.Unity.Game.AddressableSOLoader");
-
                             foreach (var addressableSO in parent.GetComponentsInChildren(addressableSOType))
                             {
                                 soHandles.Add(LoadScriptableObjectReferences(addressableSO));
                             }
 
+                            foreach (var addressableComponentLoader in parent.GetComponentsInChildren(addressableComponentLoaderType))
+                            {
+                                soHandles.Add(LoadScriptableObjectReferences(addressableComponentLoader));
+                            }
                         }
                         catch (Exception ex)
                         {
@@ -174,51 +195,92 @@ namespace ModdedShipLoader
                 __result = Addressables.ResourceManager.CreateChainOperation<GameObject, GameObject>(__result, GameObjectReady);
             }
 
-            public static AsyncOperationHandle LoadScriptableObjectReferences(Component addressableSO)
+            public static AsyncOperationHandle LoadScriptableObjectReferences(Component addressable)
             {
-                var addressableSOType = System.Reflection.Assembly.GetAssembly(typeof(BBI.Unity.Game.SecuringObjectRemovedEvent)).GetType("BBI.Unity.Game.AddressableSOLoader");
-
-                List<string> onChildren = (List<string>)addressableSOType.GetField("onChild").GetValue(addressableSO);
-                List<string> comps = (List<string>)addressableSOType.GetField("comp").GetValue(addressableSO);
-                List<string> fields = (List<string>)addressableSOType.GetField("field").GetValue(addressableSO);
-                List<string> refs = (List<string>)addressableSOType.GetField("refs").GetValue(addressableSO);
-
                 List<AsyncOperationHandle> soHandles = new List<AsyncOperationHandle>();
 
-                for (int i = 0; i < refs.Count; i++)
+                // Old style
+                if(addressable.GetType() == addressableSOType)
                 {
-                    Log($"Loading SO ref {refs[i]}", true);
+                    List<string> onChildren = (List<string>)addressableSOType.GetField("onChild").GetValue(addressable);
+                    List<string> comps = (List<string>)addressableSOType.GetField("comp").GetValue(addressable);
+                    List<string> fields = (List<string>)addressableSOType.GetField("field").GetValue(addressable);
+                    List<string> refs = (List<string>)addressableSOType.GetField("refs").GetValue(addressable);
 
-                    var parent = (onChildren.Count > 0 && onChildren[i] != "") ? addressableSO.transform.Find(onChildren[i]) : addressableSO.transform;
+                    Log($"WARN: {addressable.name} is using the old AddressableSOLoader. Consider migrating to the AddressableComponentLoader!");
 
-                    var comp = parent.GetComponents<Component>().Where(comp => comp.GetType().ToString() == comps[i]).First();
-                    System.Reflection.FieldInfo fi = comp.GetType().GetField(fields[i], System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    for (int i = 0; i < refs.Count; i++)
+                    {
+                        Log($"Loading SO ref {refs[i]}", true);
 
-                    soHandles.Add(
-                        Addressables.ResourceManager.CreateChainOperation<ScriptableObject, ScriptableObject>(
-                            Addressables.LoadAssetAsync<ScriptableObject>(new AssetReferenceScriptableObject(refs[i])),
-                            res => 
-                            {
-                                if (res.IsValid())
-                                {
-                                    fi.SetValue(comp, res.Result);
-                                }
-                                return Addressables.ResourceManager.CreateCompletedOperation(res.Result, null);
-                            }));
+                        var parent = (onChildren.Count > 0 && onChildren[i] != "") ? addressable.transform.Find(onChildren[i]) : addressable.transform;
+                        var comp = parent.GetComponents<Component>().Where(comp => comp.GetType().ToString() == comps[i]).FirstOrDefault();
+
+                        if (comp == null)
+                        {
+                            Log($"ERROR: Couldn't load {comps[i]} from {parent.name} ({refs[i]}). Ship will not load!");
+                            continue;
+                        }
+
+                        if (fields[i] == null || fields[i] == "")
+                        {
+                            Log($"ERROR: Couldn't load {fields[i]} from {parent.name} ({refs[i]}). Ship will not load!");
+                            continue;
+                        }
+
+                        if (refs[i] == null || refs[i] == "")
+                        {
+                            Log($"ERROR: Couldn't load {fields[i]} from {parent.name} ({refs[i]}). Ship will not load!");
+                            continue;
+                        }
+
+                        soHandles.Add(LoadScriptableObjectReferences(comp, fields[i], refs[i]));
+                    }
                 }
+                // New style
+                else if (addressable.GetType() == addressableComponentLoaderType)
+                {
+                    List<Component> components = (List<Component>)addressableComponentLoaderType.GetField("components").GetValue(addressable);
+                    List<string> fields = (List<string>)addressableComponentLoaderType.GetField("fields").GetValue(addressable);
+                    List<string> addresses = (List<string>)addressableComponentLoaderType.GetField("addresses").GetValue(addressable);
+
+                    for (int i = 0; i < addresses.Count; i++)
+                    {
+                        Log($"Loading AddressableComponent ref {addresses[i]}", true);
+                        soHandles.Add(LoadScriptableObjectReferences(components[i], fields[i], addresses[i]));
+                    }
+                }
+                
 
                 if (soHandles.Count > 0)
                 {
                     return Addressables.ResourceManager.CreateChainOperation(
                         Addressables.ResourceManager.CreateGenericGroupOperation(soHandles), handle =>
                         {
-                            return Addressables.ResourceManager.CreateCompletedOperation(addressableSO.gameObject, null);
+                            return Addressables.ResourceManager.CreateCompletedOperation(addressable.gameObject, null);
                         });
                 }
                 else
                 {
-                    return Addressables.ResourceManager.CreateCompletedOperation(addressableSO.gameObject, null);
+                    return Addressables.ResourceManager.CreateCompletedOperation(addressable.gameObject, null);
                 }
+            }
+
+            public static AsyncOperationHandle LoadScriptableObjectReferences(Component componentToModify, string fieldName, string addressToLoad)
+            {
+                System.Reflection.FieldInfo fi = componentToModify.GetType().GetField(fieldName, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+                return Addressables.ResourceManager.CreateChainOperation<ScriptableObject, ScriptableObject>(
+                    Addressables.LoadAssetAsync<ScriptableObject>(new AssetReferenceScriptableObject(addressToLoad)),
+                    res =>
+                    {
+                        if (res.IsValid())
+                        {
+                            fi.SetValue(componentToModify, res.Result);
+                        }
+                        return Addressables.ResourceManager.CreateCompletedOperation(res.Result, null);
+                    }
+                );
             }
         }
 
@@ -241,11 +303,7 @@ namespace ModdedShipLoader
                 {
                     if (overrideResult.Result is GameObject)
                     {
-                        GameObject result = (GameObject)overrideResult.Result;
-
-                        var addressableType = System.Reflection.Assembly.GetAssembly(typeof(BBI.Unity.Game.SecuringObjectRemovedEvent)).GetType("BBI.Unity.Game.AddressableLoader");
-                        var addressableSOType = System.Reflection.Assembly.GetAssembly(typeof(BBI.Unity.Game.SecuringObjectRemovedEvent)).GetType("BBI.Unity.Game.AddressableSOLoader");
-
+                        GameObject result = (GameObject)overrideResult.Result; 
                         // Console.WriteLine("Loading references");
 
                         foreach (var addressableSO in result.GetComponentsInChildren(addressableSOType))
@@ -254,13 +312,27 @@ namespace ModdedShipLoader
                             if (addressableSO.GetComponent(addressableType) == null)
                                 Addressables_InstantiateAsync.LoadScriptableObjectReferences((MonoBehaviour)addressableSO);
                         }
+
+                        foreach (var addressableComponents in result.GetComponentsInChildren(addressableComponentLoaderType))
+                        {
+                            // TODO: can't remember why this is an if?
+                            if (addressableComponents.GetComponent(addressableType) == null)
+                                Addressables_InstantiateAsync.LoadScriptableObjectReferences((MonoBehaviour)addressableComponents);
+                        }
                     }
 
-                    if (overrideResult.Result is TypeAsset)
+                    if (overrideResult.Result is ScriptableObject)
                     {
-                        string AssetBasis = (string)typeof(TypeAsset).GetField("AssetBasis")?.GetValue(overrideResult.Result);
+                        string AssetCloneRef = (string)overrideResult.Result.GetType().GetField("AssetCloneRef", (System.Reflection.BindingFlags)(-1))?.GetValue(overrideResult.Result);
+                        string AssetBasis = (string)overrideResult.Result.GetType().GetField("AssetBasis", (System.Reflection.BindingFlags)(-1))?.GetValue(overrideResult.Result);
 
-                        if (AssetBasis != "" && AssetBasis != null)
+                        if(AssetCloneRef != null && AssetCloneRef != "")
+                        {
+                            Log($"Clone Start: {overrideResult.Result.name} is a clone reference of {AssetCloneRef}");
+                            return Addressables.LoadAssetAsync<UnityEngine.Object>(new AssetReferenceScriptableObject(AssetCloneRef));
+                        }
+
+                        if (AssetBasis != null && AssetBasis != "")
                         {
                             Log($"Basis Start: {overrideResult.Result.name} is based on {AssetBasis}");
 
@@ -282,11 +354,14 @@ namespace ModdedShipLoader
                                         var baseVal = member.GetValue(dataField.GetValue(basisResult.Result));
                                         var overVal = member.GetValue(dataGot);
 
+                                        // Must use equals to compare objects, not references
+
                                         Log($"Values: {baseVal} < {overVal}", true);
-                                        Log($"Equal: {baseVal == overVal}", true);
+                                        Log($"Equal: {baseVal?.Equals(overVal)}", true);
 
                                         if (overVal == null) continue;
-                                        if (overVal == baseVal) continue;
+                                        // if (overVal == baseVal) continue;
+                                        if (overVal.Equals(baseVal)) continue;
                                         if (typeof(IList).IsAssignableFrom(member.FieldType) && ((IList)overVal).Count == 0) continue;
 
                                         var assetGUIDField = overVal.GetType().GetProperty("AssetGUID", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.FlattenHierarchy);
@@ -298,7 +373,7 @@ namespace ModdedShipLoader
                                             if (assetGUID != null && assetGUID == "") continue;
                                         }
 
-                                        if (member.Name != "m_RootModuleRef") continue;
+                                        // if (member.Name != "m_RootModuleRef") continue;
 
                                         Log($"Setting member {member.Name} to {overVal} from {baseVal}", true);
                                         member.SetValue(dataField.GetValue(newSO), overVal);
@@ -316,6 +391,32 @@ namespace ModdedShipLoader
                 if (newResultValid)
                     __result = newResult;
             }
+        }
+
+        // TODO: Move to it's own util file?
+        public static T CloneComponent<T>(Component comp, T other) where T : Component
+        {
+            Type type = comp.GetType();
+            if (type != other.GetType()) return null; // type mis-match
+            System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Default | System.Reflection.BindingFlags.DeclaredOnly;
+            System.Reflection.PropertyInfo[] pinfos = type.GetProperties(flags);
+            foreach (var pinfo in pinfos)
+            {
+                if (pinfo.CanWrite)
+                {
+                    try
+                    {
+                        pinfo.SetValue(comp, pinfo.GetValue(other, null), null);
+                    }
+                    catch { } // In case of NotImplementedException being thrown. For some reason specifying that exception didn't seem to catch it, so I didn't catch anything specific.
+                }
+            }
+            System.Reflection.FieldInfo[] finfos = type.GetFields(flags);
+            foreach (var finfo in finfos)
+            {
+                finfo.SetValue(comp, finfo.GetValue(other));
+            }
+            return comp as T;
         }
 
         // Helpers
@@ -344,6 +445,45 @@ namespace ModdedShipLoader
             public static void Prefix(ref Carbon.Core.Services.ServiceContext ___mSessionServices)
             {
                 ___mSessionServices.AddService<DebugMenu>(new DebugMenu(), true);
+            }
+        }
+
+        // Show in campaign menu
+        [HarmonyPatch(typeof(ShipClassAsset), "GeneratableShips", MethodType.Getter)]
+        public class ShipClassAsset_GeneratableShips
+        {
+            public static Dictionary<string, ShipArchetypeAsset> moduleToArchetype = new Dictionary<string, ShipArchetypeAsset>();
+
+            public static bool Prefix(ref ShipClassAsset.GeneratableShipOverridePair[] __result, ShipClassAsset.GeneratableShipOverridePair[] ___m_GeneratableShips)
+            {
+                var ships = ___m_GeneratableShips.ToList();
+
+                foreach (var moduleConstructionRef in moduleToArchetype.Keys)
+                {
+                    ships.Add(new ShipClassAsset.GeneratableShipOverridePair()
+                    {
+                        Guaranteed = false,
+                        OverrideRef = ships[0].OverrideRef,
+                        ShipArchetype = moduleToArchetype[moduleConstructionRef],
+                        ShipRef = new AssetReferenceModuleConstructionAsset(moduleConstructionRef)
+                    });
+                }
+
+                __result = ships.ToArray();
+
+                return false;
+            }
+        }
+
+        // Configure the number of ships in the campaign menu
+        [HarmonyPatch(typeof(ShipClassAsset), "ShipsToGenerateInJobBoard", MethodType.Getter)]
+        public class ShipClassAsset_ShipsToGenerateInJobBoard
+        {
+            public static bool Prefix(ref int __result, int ___m_ShipsToGenerateInJobBoard)
+            {
+                __result = ___m_ShipsToGenerateInJobBoard + Settings.settings.numberOfExtraShipsInCareerCatalog;
+
+                return false;
             }
         }
     }

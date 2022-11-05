@@ -94,7 +94,7 @@ namespace ModdedShipLoader
 			}
 			if (mPlayerCollider == null)
 			{
-				mPlayerCollider = mPlayer.PlayerCollider;
+				mPlayerCollider = mPlayer?.PlayerCollider;
 			}
 
 			if (mPlayerMotion != null && mPlayerCollider != null)

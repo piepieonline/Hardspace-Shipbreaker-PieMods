@@ -1,1 +1,13 @@
-﻿TypeAsset
+﻿CompanyInfoAsset
+CompanyShipNameAsset
+CurveAsset
+EntityComponentDataAssetBase
+ModuleConstructionAsset
+ModulePropertyAsset
+ObjectInfoAsset
+PropertyContainerAsset
+RentalCostsAsset
+RoomTypeAsset
+ShiftCycleCostAsset
+ShipClassAsset
+ModuleTypeAsset

@@ -10,6 +10,8 @@ namespace ModdedShipLoader
     public class Settings
     {
         public bool enabled;
+        public bool showModShipsInCareer;
+        public int numberOfExtraShipsInCareerCatalog;
         public bool debugLog;
         public bool debugLogDetailed;
         public bool enableDeveloperShips;
