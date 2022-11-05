@@ -26,6 +26,8 @@ namespace ShiftRecorder
         public int recordingBitrate;
         public int recordingAntiAliasing;
 
+        public int garbageCollectionIntervalMS;
+
         public bool showInGamePreview;
         public int previewHeight;
         public int previewVerticalPosition;

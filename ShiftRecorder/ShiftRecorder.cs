@@ -22,6 +22,12 @@ namespace ShiftRecorder
         {
             // Plugin startup logic
             Settings.Load();
+
+            if(!System.IO.File.Exists(RockVR.Video.PathConfig.ffmpegPath))
+            {
+                Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_NAME} is failed to load! Missing FFmpeg at {RockVR.Video.PathConfig.ffmpegPath}");
+                return;
+            }
             if (Settings.settings.enabled)
             {
                 LoggerInstance = Logger;

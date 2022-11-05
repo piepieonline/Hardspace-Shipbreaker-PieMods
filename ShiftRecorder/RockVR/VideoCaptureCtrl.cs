@@ -280,7 +280,7 @@ namespace RockVR.Video
             while (status == StatusType.STARTED)
             {
                 // TODO, adjust gc interval dynamic.
-                Thread.Sleep(1000);
+                Thread.Sleep(ShiftRecorder.Settings.settings.garbageCollectionIntervalMS);
                 System.GC.Collect();
             }
         }
