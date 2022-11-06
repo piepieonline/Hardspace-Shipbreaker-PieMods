@@ -297,7 +297,7 @@ namespace ModdedShipLoader
             [HarmonyPostfix]
             public static void HarmonyPostfix(ref AsyncOperationHandle<UnityEngine.Object> __result, object key)
             {
-                bool newResultValid = assetKeys.Contains(key.ToString());
+                bool newResultValid = assetKeys != null && assetKeys.Contains(key.ToString());
 
                 var newResult = Addressables.ResourceManager.CreateChainOperation<UnityEngine.Object, UnityEngine.Object>(__result, overrideResult =>
                 {
@@ -484,6 +484,21 @@ namespace ModdedShipLoader
                 __result = ___m_ShipsToGenerateInJobBoard + Settings.settings.numberOfExtraShipsInCareerCatalog;
 
                 return false;
+            }
+        }
+        
+        // Disable mass and cost, as they are wrong
+        // TODO: Fix this calculation? Might just not be possible :(
+        [HarmonyPatch(typeof(JobBoardScreenController), "DisplayShipInfoSalvageIndicator")]
+        public class JobBoardScreenController_DisplayShipInfoSalvageIndicator
+        {
+            public static void Postfix(ShipCardController ___mCurrentlySelectedShip, TMPro.TextMeshProUGUI ___m_TotalMassField, TMPro.TextMeshProUGUI ___m_TotalValueField)
+            {
+                if(ShipClassAsset_GeneratableShips.moduleToArchetype.ContainsKey(___mCurrentlySelectedShip.ShipPreview.ConstructionAssetRef.AssetGUID))
+                {
+                    ___m_TotalMassField.SetText("Unknown (Modded)", true);
+                    ___m_TotalValueField.SetText("Unknown (Modded)", true);
+                }
             }
         }
     }
