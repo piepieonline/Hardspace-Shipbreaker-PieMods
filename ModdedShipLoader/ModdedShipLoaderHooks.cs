@@ -453,6 +453,35 @@ namespace ModdedShipLoader
         public class ShipClassAsset_GeneratableShips
         {
             public static Dictionary<string, ShipArchetypeAsset> moduleToArchetype = new Dictionary<string, ShipArchetypeAsset>();
+            public static Dictionary<string, int> moduleToMinLevel = new Dictionary<string, int>();
+            
+            
+            private static Dictionary<string, int> overrideRefToLevel = new Dictionary<string, int>()
+            {
+                { "47acc2fd684b23b4fbb012d6d946b4cd", 0 },
+                { "b9e1e972902114c40a2d4757ac015c09", 1 },
+                { "389ff83b79255d54682f27d3f4f093b9", 2 },
+                { "4246848384a0fef4fb3d5dac7d2575ac", 3 },
+                { "0d27abce2f298fb409698a0969036eb3", 3 },
+                { "80525e0693e537b4ba9dfb89c2475d3b", 4 },
+                { "9f3d5012d0385694a8e3208d45262f12", 4 },
+                { "11694b7aa96123f449c66f1907248d84", 5 },
+                { "2a8b10e2c04c4e247b7725a46a177119", 5 },
+                { "39107a60851420e4fb61ae12c26923ce", 5 },
+                { "534f845a37e08e04c93cc6608728a2d6", 5 },
+                { "02b7babd28b63244f98e62ca94ffddf7", 6 },
+                { "6bd1a6426338e094992169b4c4af18d0", 6 },
+                { "4caad3e752972334eb2b34646b43fc81", 6 },
+                { "43f493ab9c63cbb49a3c6cc01ba654b8", 7 },
+                { "b36c98863c5d26e4a98d246444a4c60d", 7 },
+                { "dc60f136d48327b4e872352efec7780d", 7 },
+                { "f4f482461faa29e4e851ac22e9ce0ce3", 7 },
+                { "1529837472d18fa4fb7800d1237ad1a9", 8 },
+                { "5104c2b3a4f281743b94f6b624a35335", 8 },
+                { "fa9077bcfa9d0d84f88f887d85efeb1f", 8 },
+                { "af318959337b4e94e9d8b47db3902237", 9 },
+                { "27290745cafacfb439cdd9aada509105", 10 }
+            };
 
             public static bool Prefix(ref ShipClassAsset.GeneratableShipOverridePair[] __result, ShipClassAsset.GeneratableShipOverridePair[] ___m_GeneratableShips)
             {
@@ -460,13 +489,16 @@ namespace ModdedShipLoader
 
                 foreach (var moduleConstructionRef in moduleToArchetype.Keys)
                 {
-                    ships.Add(new ShipClassAsset.GeneratableShipOverridePair()
+                    if(moduleToMinLevel[moduleConstructionRef] <= overrideRefToLevel[ships[0].OverrideRef.AssetGUID])
                     {
-                        Guaranteed = false,
-                        OverrideRef = ships[0].OverrideRef,
-                        ShipArchetype = moduleToArchetype[moduleConstructionRef],
-                        ShipRef = new AssetReferenceModuleConstructionAsset(moduleConstructionRef)
-                    });
+                        ships.Add(new ShipClassAsset.GeneratableShipOverridePair()
+                        {
+                            Guaranteed = false,
+                            OverrideRef = ships[0].OverrideRef,
+                            ShipArchetype = moduleToArchetype[moduleConstructionRef],
+                            ShipRef = new AssetReferenceModuleConstructionAsset(moduleConstructionRef)
+                        });
+                    }
                 }
 
                 __result = ships.ToArray();

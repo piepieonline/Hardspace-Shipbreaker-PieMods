@@ -92,10 +92,21 @@ namespace ModdedShipLoader
                                 {
                                     foreach(var constructionAsset in res.Result)
                                     {
-                                        if(constructionAsset.AssetGUIDIsValid() && constructionAsset.Data.CatalogueImageRef.AssetGUID != "" && constructionAsset.Data.ShipArchetype != null)
+                                        Addressables.LoadAssetAsync<BBI.Unity.Game.ModuleConstructionAsset>(new AssetReferenceModuleConstructionAsset(constructionAsset.AssetGUID)).Completed += forceLoadResult =>
                                         {
-                                            ModdedShipLoaderHooks.ShipClassAsset_GeneratableShips.moduleToArchetype[constructionAsset.AssetGUID] = constructionAsset.Data.ShipArchetype;
-                                        }
+                                            if (constructionAsset.AssetGUIDIsValid() && constructionAsset.Data.CatalogueImageRef.AssetGUID != "" && constructionAsset.Data.ShipArchetype != null)
+                                            {
+                                                ModdedShipLoaderHooks.ShipClassAsset_GeneratableShips.moduleToArchetype[constructionAsset.AssetGUID] = constructionAsset.Data.ShipArchetype;
+
+                                                int minimumDifficultyLevel = int.MaxValue;
+                                                foreach (var difficultyProperty in forceLoadResult.Result.Data.PropertyData.Difficulty)
+                                                {
+                                                    minimumDifficultyLevel = Mathf.Min(minimumDifficultyLevel, int.Parse(difficultyProperty.Asset.Data.NameShorthand));
+                                                }
+
+                                                ModdedShipLoaderHooks.ShipClassAsset_GeneratableShips.moduleToMinLevel[constructionAsset.AssetGUID] = minimumDifficultyLevel;
+                                            }
+                                        };
                                     }
                                 }
                             };
