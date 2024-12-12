@@ -9,7 +9,7 @@ Installation:
     Download the latest 64 bit (x64) version of BepInEx 5 (5.4.19 at time of writing) from https://github.com/BepInEx/BepInEx/releases
     Extract into the same folder as "Shipbreaker.exe".
     Run the game, load the main menu and quit.
-    Extract the mod to "BepInEx\plugins\", so you should have (for example) ".\BepInEx\plugins\UpgradeCostAdjuster\UpgradeCostAdjuster.dll"
+    Extract the mod to "BepInEx\plugins\", so you should have (for example) ".\BepInEx\plugins\PieChallengeMode\PieChallengeMode.dll"
     Modify the settings to your liking
 
 Code:

@@ -23,6 +23,12 @@ namespace UpgradeCostAdjuster
 
             if (hasPatched) return;
 
+            foreach(var certLevel in Resources.FindObjectsOfTypeAll<CertificationLevelSettingsAsset>())
+            {
+                FieldInfo CertificationLevelSettingsAsset_RequiredXP = typeof(CertificationLevelSettings).GetField("m_RequiredXP", BindingFlags.NonPublic | BindingFlags.Instance);
+                CertificationLevelSettingsAsset_RequiredXP.SetValue(certLevel.Data, certLevel.Data.RequiredXP * 2);
+            }
+
             var currencyAssets = Resources.FindObjectsOfTypeAll<CurrencyAsset>();
             var ltAsset = currencyAssets.Where(currAsset => currAsset.name == "LT_CurrencyAsset").First();
             var creditsAsset = currencyAssets.Where(currAsset => currAsset.name == "Credits_CurrencyAsset").First();
@@ -94,6 +100,13 @@ namespace UpgradeCostAdjuster
                         UpgradeCostAdjuster.LoggerInstance.LogInfo($"Changed {asset.name} from: LT {originalPrice} to {string.Join(" ", newPrices.Select(price => $"{price.CurrencyAsset.name.Split('_')[0]} {price.Amount}"))}");
                 }
             }
+
+            FieldInfo VendingMachineItemAsset_Cost = typeof(VendingMachineItemData).GetField("m_Cost", BindingFlags.NonPublic | BindingFlags.Instance);
+            foreach (var vendingMachineAsset in Resources.FindObjectsOfTypeAll<VendingMachineItemAsset>())
+            {
+                VendingMachineItemAsset_Cost.SetValue(vendingMachineAsset.Data, (int)(123));
+            }
+
             hasPatched = true;
             UpgradeCostAdjuster.LoggerInstance.LogInfo($"Costs changed");
         }

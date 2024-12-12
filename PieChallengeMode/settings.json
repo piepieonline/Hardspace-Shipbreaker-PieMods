@@ -1,7 +1,7 @@
 {
-	"enabled": true,
+	"enabled": false,
 	"alwaysOn": true,
-	"debugLog": true,
+	"debugLog": false,
 	"minTotalObjectives": 2,
 	"maxTotalObjectives": 5,
 	"baseTimePerShipType": {

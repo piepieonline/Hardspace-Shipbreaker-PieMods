@@ -10,6 +10,7 @@ namespace CustomPostersAndStickers
     public class Settings
     {
         public bool enabled;
+        public bool customStickersEnabled;
 
         public static Settings settings;
 

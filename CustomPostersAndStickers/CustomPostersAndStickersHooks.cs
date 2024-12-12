@@ -64,6 +64,8 @@ namespace CustomPostersAndStickers
 
             public static bool Prefix(MainSettings __instance, ref StickerSettings __result)
             {
+                if (!Settings.settings.customStickersEnabled) return true;
+
                 var levelDataFI = typeof(MainSettings).GetField("m_StickerSettingsAsset", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
                 var levelData = ((StickerSettingsAsset)levelDataFI.GetValue(__instance))?.Data;
                 __result = levelData;
@@ -78,7 +80,7 @@ namespace CustomPostersAndStickers
 
                 stickerCollectionAsset.StickerList.AddRange(CustomPostersAndStickers.CustomStickers);
 
-
+                // For each custom sticker, it needs an unlockable entry. Hardcoding to use "Jack Me Up" for now
                 foreach (var content in __result.StickerCollection)
                 {
                     foreach (var sticker in content.StickerList)
@@ -110,6 +112,8 @@ namespace CustomPostersAndStickers
 
             public static bool Prefix(AssetSaveKeyConfigAsset __instance, ref List<AssetSaveKeyConfigAsset.AssetSaveKeyEntry> __result)
             {
+                if (!Settings.settings.customStickersEnabled) return true;
+
                 var levelDataFI = typeof(AssetSaveKeyConfigAsset).GetField("m_AssetSaveKeys", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
                 var levelData = (List<AssetSaveKeyConfigAsset.AssetSaveKeyEntry>)levelDataFI.GetValue(__instance);
                 __result = levelData;

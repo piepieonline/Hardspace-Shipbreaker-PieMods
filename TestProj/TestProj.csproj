@@ -27,17 +27,32 @@
     <Reference Include="BBI.Unity.Game">
       <HintPath>..\..\..\..\..\Games\Xbox\Hardspace- Shipbreaker\Content\Shipbreaker_Data\Managed\BBI.Unity.Game.dll</HintPath>
     </Reference>
+    <Reference Include="Carbon.Audio">
+      <HintPath>..\..\..\..\..\Games\Xbox\Hardspace- Shipbreaker\Content\Shipbreaker_Data\Managed\Carbon.Audio.dll</HintPath>
+    </Reference>
     <Reference Include="Carbon.Core">
       <HintPath>..\..\..\..\..\Games\Xbox\Hardspace- Shipbreaker\Content\Shipbreaker_Data\Managed\Carbon.Core.dll</HintPath>
     </Reference>
     <Reference Include="Carbon.Core.Unity">
       <HintPath>..\..\..\..\..\Games\Xbox\Hardspace- Shipbreaker\Content\Shipbreaker_Data\Managed\Carbon.Core.Unity.dll</HintPath>
     </Reference>
+    <Reference Include="Carbon.Localization.Core">
+      <HintPath>..\..\..\..\..\Games\Xbox\Hardspace- Shipbreaker\Content\Shipbreaker_Data\Managed\Carbon.Localization.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="InControl">
+      <HintPath>..\..\..\..\..\Games\Xbox\Hardspace- Shipbreaker\Content\Shipbreaker_Data\Managed\InControl.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\..\..\..\..\Games\Xbox\Hardspace- Shipbreaker\Content\Shipbreaker_Data\Managed\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Addressables">
       <HintPath>..\..\..\..\..\Games\Xbox\Hardspace- Shipbreaker\Content\Shipbreaker_Data\Managed\Unity.Addressables.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Collections">
+      <HintPath>..\..\..\..\..\Games\Xbox\Hardspace- Shipbreaker\Content\Shipbreaker_Data\Managed\Unity.Collections.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Entities">
+      <HintPath>..\..\..\..\..\Games\Xbox\Hardspace- Shipbreaker\Content\Shipbreaker_Data\Managed\Unity.Entities.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Mathematics">
       <HintPath>..\..\..\..\..\Games\Xbox\Hardspace- Shipbreaker\Content\Shipbreaker_Data\Managed\Unity.Mathematics.dll</HintPath>
